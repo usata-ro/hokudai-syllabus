@@ -24,7 +24,7 @@ export const getStyle: PlasmoGetStyle = () => {
       --table-th-bg: #f5faf6;
       --border-color: #d1e6d5;
       --header-text: #ffffff;
-      --inazo-color: #00bced; /* iNAZO用水色 */
+      --inazo-color: #006085;
     }
 
     /* ダークモードへの対応 */
@@ -37,65 +37,80 @@ export const getStyle: PlasmoGetStyle = () => {
         --table-th-bg: #152b1d;
         --border-color: #21402b;
         --header-text: #e6f2ec;
-        --inazo-color: #1ec8f2;
+        --inazo-color: #0a7ea3;
       }
     }
 
-    /* メインラッパー */
+    /* 💡 メインラッパー（全画面を覆い、Flexboxで中央寄せするアプローチに変更） */
     .modern-wrapper {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      min-width: 100vw;
+      min-height: 100vh;
       z-index: 10000;
-      overflow: auto; /* 💡 左右・上下両方のスクロールを許可 */
       font-family: "Gen Interface JP", sans-serif;
       font-weight: 400;
       color: var(--text-color);
       background-color: var(--bg-color);
-      min-width: 1100px;
       display: flex;
       flex-direction: column;
+      align-items: center; /* 💡 ここで横方向の中央寄せを確実にする */
     }
 
-    /* 💡 上部固定エリア（ヘッダーとコントロールバーをまとめるラッパー） */
+    /* 上部固定エリア（全幅を維持） */
     .sticky-header-container {
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 4px 12px rgba(31, 140, 50, 0.15); /* 影をコンテナ全体に */
+      box-shadow: 0 4px 12px rgba(31, 140, 50, 0.15);
       background-color: var(--bg-color);
+      width: 100%;
+      min-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* 💡 ヘッダーも中央寄せの軸を合わせる */
     }
 
-    /* リッチなヘッダー */
-    .modern-header {
+    /* ヘッダーとコントロールバーの背景を確実に全幅かつ最低1100pxにする */
+    .modern-header-bg, .control-bar-bg {
+      width: 100%;
+      min-width: 1100px;
+      display: flex;
+      justify-content: center; /* 💡 中身を中央に寄せる */
+    }
+    
+    .modern-header-bg {
       background-color: var(--main-color);
+    }
+
+    .control-bar-bg {
+      background-color: rgba(137, 191, 128, 0.05);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    /* ヘッダーの中身（横幅固定1100px） */
+    .modern-header {
+      width: 1100px;
       color: var(--header-text);
       padding: 12px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
+      box-sizing: border-box;
     }
 
     .header-left {
       display: flex;
       align-items: center;
       gap: 24px;
-      flex-wrap: wrap;
     }
 
     .modern-header h1 {
       font-family: "Gen Interface JP Display", sans-serif;
       font-weight: 800;
       margin: 0;
-      font-size: 1.25rem; /* 💡 少し文字を大きく */
+      font-size: 1.25rem;
       letter-spacing: 0.05em;
     }
 
-    /* 言語切り替えトグルボタンのデザイン */
     .lang-toggle {
       display: inline-flex;
       background-color: rgba(255, 255, 255, 0.2);
@@ -110,7 +125,7 @@ export const getStyle: PlasmoGetStyle = () => {
       color: var(--header-text);
       padding: 6px 14px;
       font-family: inherit;
-      font-size: 0.95rem; /* 💡 サイズアップ */
+      font-size: 0.95rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -128,8 +143,7 @@ export const getStyle: PlasmoGetStyle = () => {
     .header-sub-nav {
       display: flex;
       gap: 20px;
-      font-size: 0.95rem; /* 💡 サイズアップ */
-      flex-wrap: wrap;
+      font-size: 0.95rem;
     }
 
     .header-sub-nav a {
@@ -146,20 +160,18 @@ export const getStyle: PlasmoGetStyle = () => {
       text-underline-offset: 4px;
     }
 
-    /* コントロールバー（パンくずとボタン群） */
+    /* コントロールバーの中身（横幅固定1100px） */
     .control-bar {
+      width: 1100px;
+      padding: 16px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 32px; /* 💡 余白を少し大きく */
-      background-color: rgba(137, 191, 128, 0.05);
-      border-bottom: 1px solid var(--border-color);
-      flex-wrap: wrap;
-      gap: 16px;
+      box-sizing: border-box;
     }
 
     .breadcrumb {
-      font-size: 0.95rem; /* 💡 サイズアップ */
+      font-size: 0.95rem;
       display: flex;
       gap: 12px;
       align-items: center;
@@ -183,20 +195,18 @@ export const getStyle: PlasmoGetStyle = () => {
     
     .button-group {
       display: flex;
-      gap: 12px; /* 💡 ボタン間の余白を拡大 */
+      gap: 12px;
       align-items: center;
-      flex-wrap: wrap;
     }
 
-    /* ボタン共通のベーススタイル */
     .btn-common {
       background-color: var(--bg-color);
-      padding: 10px 20px; /* 💡 ボタンを大きく（押しやすく） */
+      padding: 10px 20px;
       border-radius: 6px;
       cursor: pointer;
       font-family: "Gen Interface JP", sans-serif;
       font-weight: bold;
-      font-size: 0.95rem; /* 💡 文字サイズを大きく */
+      font-size: 0.95rem;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       text-decoration: none;
@@ -205,7 +215,6 @@ export const getStyle: PlasmoGetStyle = () => {
       justify-content: center;
     }
 
-    /* 戻るボタンデザイン */
     .btn-back {
       color: var(--main-color);
       border: 1px solid var(--main-color);
@@ -215,10 +224,9 @@ export const getStyle: PlasmoGetStyle = () => {
       background-color: var(--main-color);
       color: #ffffff;
       box-shadow: 0 4px 8px rgba(31, 140, 50, 0.2);
-      transform: translateY(-1px); /* ホバーで浮くアニメーション */
+      transform: translateY(-1px);
     }
 
-    /* iNAZO検索ボタンデザイン */
     .btn-inazo {
       color: var(--inazo-color);
       border: 1px solid var(--inazo-color);
@@ -227,15 +235,14 @@ export const getStyle: PlasmoGetStyle = () => {
     .btn-inazo:hover {
       background-color: var(--inazo-color);
       color: #ffffff;
-      box-shadow: 0 4px 8px rgba(0, 188, 237, 0.2);
+      box-shadow: 0 4px 8px rgba(0, 96, 133, 0.2);
       transform: translateY(-1px);
     }
 
+    /* メインコンテンツ（横幅固定1100px） */
     .main-content {
+      width: 1100px;
       padding: 40px 32px;
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
       box-sizing: border-box;
     }
 
@@ -270,7 +277,7 @@ export const getStyle: PlasmoGetStyle = () => {
       padding: 16px 20px;
       font-family: "Gen Interface JP Display", sans-serif;
       font-weight: 800;
-      font-size: 1rem;
+      font-size: 1.15rem;
       color: var(--text-color);
       position: relative;
       box-sizing: border-box;
@@ -292,9 +299,17 @@ export const getStyle: PlasmoGetStyle = () => {
       padding: 16px 20px;
       white-space: pre-wrap;
       word-wrap: break-word;
-      font-size: 1rem;
-      line-height: 1.6;
+      font-size: 1.15rem;
+      line-height: 1.75;
       box-sizing: border-box;
+    }
+
+    /* コンパクト版の表（前半の基本情報用） */
+    .syllabus-grid.compact .syllabus-item-label,
+    .syllabus-grid.compact .syllabus-item-value {
+      padding: 10px 16px;
+      font-size: 1.1rem;
+      line-height: 1.6;
     }
 
     /* テキスト内URLのリンクデザイン */
@@ -343,6 +358,7 @@ export const getStyle: PlasmoGetStyle = () => {
 // 3. データ抽出定義
 type TargetData = {
   id: string
+  fallbackIds?: string[]
   ja: string
   en: string
   fullWidth: boolean
@@ -555,12 +571,14 @@ const targetDataList: TargetData[] = [
   },
   {
     id: "ctl00_phContents_ucContents_ItemText_lblNormalJ",
+    fallbackIds: ["ctl00_phContents_ucContents_ItemText_pBooks"],
     ja: "テキスト・教科書",
     en: "Textbooks",
     fullWidth: true
   },
   {
     id: "ctl00_phContents_ucContents_ItemReference_lblNormalJ",
+    fallbackIds: ["ctl00_phContents_ucContents_ItemReference_pBooks"],
     ja: "講義指定図書",
     en: "Reading List",
     fullWidth: true
@@ -585,6 +603,7 @@ const targetDataList: TargetData[] = [
   },
   {
     id: "ctl00_phContents_ucContents_ItemSDGs_pSDGs",
+    fallbackIds: ["ctl00_phContents_ucContents_ItemSDGs_pSDGsPct"],
     ja: "持続可能な開発目標（SDGs）",
     en: "Sustainable Development Goals（SDGs）",
     fullWidth: true
@@ -600,9 +619,40 @@ type TableRow = {
   fullWidth: boolean
 }
 
-// 💡 5. URLを自動でリンク（aタグ）にするユーティリティ関数
+const extractTextWithLinks = (el: HTMLElement | null): string => {
+  if (!el) return ""
+
+  let html = el.innerHTML
+  html = html.replace(/<br\s*\/?>/gi, "\n")
+  html = html.replace(/<\/span>/gi, "</span>\n")
+  html = html.replace(/<\/p>/gi, "</p>\n")
+  html = html.replace(/<\/div>/gi, "</div>\n")
+
+  const tempDiv = document.createElement("div")
+  tempDiv.innerHTML = html
+
+  const links = tempDiv.querySelectorAll("a")
+  links.forEach((a) => {
+    const url = a.href
+    if (url && url.startsWith("http") && a.textContent?.trim() !== url) {
+      a.textContent = `${a.textContent?.trim()}\n${url}\n`
+    }
+  })
+
+  let text = tempDiv.textContent || ""
+
+  text = text
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n")
+
+  text = text.replace(/\n{3,}/g, "\n\n").trim()
+
+  return text
+}
+
 const linkify = (text: string) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const urlRegex = /(https?:\/\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+)/g
   return text.split(urlRegex).map((part, index) => {
     if (part.match(urlRegex)) {
       return (
@@ -623,7 +673,7 @@ const linkify = (text: string) => {
 // 4. メインのUIコンポーネント
 const SyllabusModernUI = () => {
   const [tableData, setTableData] = useState<TableRow[]>([])
-  const [lang, setLang] = useState<"ja" | "en">("ja") // 現在の言語を管理
+  const [lang, setLang] = useState<"ja" | "en">("ja")
 
   useEffect(() => {
     // 元のシラバス要素を非表示にする処理
@@ -631,20 +681,34 @@ const SyllabusModernUI = () => {
     if (oldForm) {
       oldForm.style.display = "none"
     }
-    document.body.style.overflow = "hidden"
+
+    // bodyの最小幅を1100pxに固定し、横スクロールに対応
+    document.body.style.overflow = "auto"
+    document.body.style.minWidth = "1100px"
     document.body.style.margin = "0"
     document.body.style.padding = "0"
     document.body.style.backgroundColor = "#ffffff"
 
     // データのスクレイピングと「日本語/英語」の自動分離
     const extracted = targetDataList.map((item) => {
-      const el = document.getElementById(item.id)
-      const text = el?.innerText?.trim() || "　"
+      let text = extractTextWithLinks(document.getElementById(item.id))
+
+      if (item.fallbackIds) {
+        item.fallbackIds.forEach((fid) => {
+          const fallbackText = extractTextWithLinks(
+            document.getElementById(fid)
+          )
+          if (fallbackText) {
+            text += (text ? "\n\n" : "") + fallbackText
+          }
+        })
+      }
+
+      text = text || "　"
 
       let valJa = text
       let valEn = text
 
-      // 「改行を含まず、末尾が ] で終わる文字列」の場合のみ、[ ] の中身を英語として分離する
       if (!text.includes("\n") && text.endsWith("]")) {
         const lastBracketIndex = text.lastIndexOf("[")
         if (lastBracketIndex !== -1 && lastBracketIndex !== 0) {
@@ -691,76 +755,76 @@ const SyllabusModernUI = () => {
 
   return (
     <div className="modern-wrapper">
-      {/* 💡 ヘッダーとコントロールバーをまとめて上部固定するコンテナ */}
+      {/* ヘッダーとコントロールバーをまとめて上部固定するコンテナ（全幅） */}
       <div className="sticky-header-container">
         {/* ヘッダー領域 */}
-        <header className="modern-header">
-          <div className="header-left">
-            <h1>北海道大学シラバス検索システム</h1>
-            {/* 現在の言語が視覚的にわかるトグルボタン */}
-            <div className="lang-toggle">
-              <button
-                className={`lang-btn ${lang === "ja" ? "active" : ""}`}
-                onClick={() => setLang("ja")}>
-                日本語
-              </button>
-              <button
-                className={`lang-btn ${lang === "en" ? "active" : ""}`}
-                onClick={() => setLang("en")}>
-                English
-              </button>
+        <div className="modern-header-bg">
+          <header className="modern-header">
+            <div className="header-left">
+              <h1>北海道大学シラバス検索システム</h1>
+              <div className="lang-toggle">
+                <button
+                  className={`lang-btn ${lang === "ja" ? "active" : ""}`}
+                  onClick={() => setLang("ja")}>
+                  日本語
+                </button>
+                <button
+                  className={`lang-btn ${lang === "en" ? "active" : ""}`}
+                  onClick={() => setLang("en")}>
+                  English
+                </button>
+              </div>
             </div>
-          </div>
-          <nav className="header-sub-nav">
-            <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
-            <a href="/Portal/Public/Num/NumSearch.aspx">ナンバリング検索</a>
-            <a href="/Portal/Public/Cur/CurSearch.aspx">実行教育課程検索</a>
-          </nav>
-        </header>
+            <nav className="header-sub-nav">
+              <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
+              <a href="/Portal/Public/Num/NumSearch.aspx">ナンバリング検索</a>
+              <a href="/Portal/Public/Cur/CurSearch.aspx">実行教育課程検索</a>
+            </nav>
+          </header>
+        </div>
 
         {/* パンくずリストとボタン群 */}
-        <div className="control-bar">
-          <div className="breadcrumb">
-            <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
-            <span>&gt;</span>
-            <span>{lang === "ja" ? "シラバス詳細" : "Syllabus Details"}</span>
-          </div>
+        <div className="control-bar-bg">
+          <div className="control-bar">
+            <div className="breadcrumb">
+              <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
+              <span>&gt;</span>
+              <span>{lang === "ja" ? "シラバス詳細" : "Syllabus Details"}</span>
+            </div>
 
-          {/* 💡 ボタン群 */}
-          <div className="button-group">
-            {/* 💡 順番変更：科目名を左側に */}
-            <a
-              href={`https://inazo.hu-jagajaga.com/search?search=${subjectQuery}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-common btn-inazo">
-              科目名でiNAZO検索
-            </a>
+            {/* ボタン群 */}
+            <div className="button-group">
+              <a
+                href={`https://inazo.hu-jagajaga.com/search?search=${subjectQuery}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-common btn-inazo">
+                科目名でiNAZO検索
+              </a>
 
-            {/* 💡 教員名を右側に */}
-            <a
-              href={`https://inazo.hu-jagajaga.com/search?search=${teacherQuery}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-common btn-inazo">
-              教員名でiNAZO検索
-            </a>
+              <a
+                href={`https://inazo.hu-jagajaga.com/search?search=${teacherQuery}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-common btn-inazo">
+                教員名でiNAZO検索
+              </a>
 
-            {/* 戻るボタン */}
-            <button
-              className="btn-common btn-back"
-              onClick={() => window.history.back()}>
-              {lang === "ja" ? "前のページに戻る" : "Go Back"}
-            </button>
+              <button
+                className="btn-common btn-back"
+                onClick={() => window.history.back()}>
+                {lang === "ja" ? "前のページに戻る" : "Go Back"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* シラバスのメインコンテンツ */}
       <main className="main-content">
-        {/* 前半の表（基本情報） */}
+        {/* 前半の表（基本情報用）：compactクラスを付与して行間を狭くする */}
         <div className="syllabus-card" style={{ marginBottom: "40px" }}>
-          <div className="syllabus-grid">
+          <div className="syllabus-grid compact">
             {table1.map((row, index) => (
               <div
                 key={index}
@@ -769,7 +833,6 @@ const SyllabusModernUI = () => {
                   {lang === "ja" ? row.labelJa : row.labelEn}
                 </div>
                 <div className="syllabus-item-value">
-                  {/* 💡 linkify関数を通してテキストを描画 */}
                   {lang === "ja" ? linkify(row.valueJa) : linkify(row.valueEn)}
                 </div>
               </div>
@@ -789,7 +852,6 @@ const SyllabusModernUI = () => {
                     {lang === "ja" ? row.labelJa : row.labelEn}
                   </div>
                   <div className="syllabus-item-value">
-                    {/* 💡 linkify関数を通してテキストを描画 */}
                     {lang === "ja"
                       ? linkify(row.valueJa)
                       : linkify(row.valueEn)}
