@@ -1,6 +1,8 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useState } from "react"
 
+import { useStorage } from "@plasmohq/storage/hook"
+
 // 1. 動作対象のURL設定
 export const config: PlasmoCSConfig = {
   matches: [
