@@ -753,98 +753,93 @@ const SyllabusModernUI = () => {
   const table1 = splitIndex !== -1 ? tableData.slice(0, splitIndex) : tableData
   const table2 = splitIndex !== -1 ? tableData.slice(splitIndex) : []
 
-  return (
-    <div className="modern-wrapper">
-      {/* ヘッダーとコントロールバーをまとめて上部固定するコンテナ（全幅） */}
-      <div className="sticky-header-container">
-        {/* ヘッダー領域 */}
-        <div className="modern-header-bg">
-          <header className="modern-header">
-            <div className="header-left">
-              <h1>北海道大学シラバス検索システム</h1>
-              <div className="lang-toggle">
+  const SyllabusDetailUI = () => {
+    // 💡 ポップアップと同じキー名（"isDetailActive"）を指定して状態を受け取る
+    const [isDetailActive] = useStorage("isDetailActive", true)
+
+    // 💡 もし設定が「オフ」なら、何も新しいUIを表示しない（＝元のシラバス画面のままにする）
+    if (!isDetailActive) {
+      return null
+    }
+    return (
+      <div className="modern-wrapper">
+        {/* ヘッダーとコントロールバーをまとめて上部固定するコンテナ（全幅） */}
+        <div className="sticky-header-container">
+          {/* ヘッダー領域 */}
+          <div className="modern-header-bg">
+            <header className="modern-header">
+              <div className="header-left">
+                <h1>北海道大学シラバス検索システム</h1>
+                <div className="lang-toggle">
+                  <button
+                    className={`lang-btn ${lang === "ja" ? "active" : ""}`}
+                    onClick={() => setLang("ja")}>
+                    日本語
+                  </button>
+                  <button
+                    className={`lang-btn ${lang === "en" ? "active" : ""}`}
+                    onClick={() => setLang("en")}>
+                    English
+                  </button>
+                </div>
+              </div>
+              <nav className="header-sub-nav">
+                <a href="/Portal/Public/Syllabus/SearchMain.aspx">
+                  シラバス検索
+                </a>
+                <a href="/Portal/Public/Num/NumSearch.aspx">ナンバリング検索</a>
+                <a href="/Portal/Public/Cur/CurSearch.aspx">実行教育課程検索</a>
+              </nav>
+            </header>
+          </div>
+
+          {/* パンくずリストとボタン群 */}
+          <div className="control-bar-bg">
+            <div className="control-bar">
+              <div className="breadcrumb">
+                <a href="/Portal/Public/Syllabus/SearchMain.aspx">
+                  シラバス検索
+                </a>
+                <span>&gt;</span>
+                <span>
+                  {lang === "ja" ? "シラバス詳細" : "Syllabus Details"}
+                </span>
+              </div>
+
+              {/* ボタン群 */}
+              <div className="button-group">
+                <a
+                  href={`https://inazo.hu-jagajaga.com/search?search=${subjectQuery}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-common btn-inazo">
+                  科目名でiNAZO検索
+                </a>
+
+                <a
+                  href={`https://inazo.hu-jagajaga.com/search?search=${teacherQuery}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-common btn-inazo">
+                  教員名でiNAZO検索
+                </a>
+
                 <button
-                  className={`lang-btn ${lang === "ja" ? "active" : ""}`}
-                  onClick={() => setLang("ja")}>
-                  日本語
-                </button>
-                <button
-                  className={`lang-btn ${lang === "en" ? "active" : ""}`}
-                  onClick={() => setLang("en")}>
-                  English
+                  className="btn-common btn-back"
+                  onClick={() => window.history.back()}>
+                  {lang === "ja" ? "前のページに戻る" : "Go Back"}
                 </button>
               </div>
             </div>
-            <nav className="header-sub-nav">
-              <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
-              <a href="/Portal/Public/Num/NumSearch.aspx">ナンバリング検索</a>
-              <a href="/Portal/Public/Cur/CurSearch.aspx">実行教育課程検索</a>
-            </nav>
-          </header>
-        </div>
-
-        {/* パンくずリストとボタン群 */}
-        <div className="control-bar-bg">
-          <div className="control-bar">
-            <div className="breadcrumb">
-              <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
-              <span>&gt;</span>
-              <span>{lang === "ja" ? "シラバス詳細" : "Syllabus Details"}</span>
-            </div>
-
-            {/* ボタン群 */}
-            <div className="button-group">
-              <a
-                href={`https://inazo.hu-jagajaga.com/search?search=${subjectQuery}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-common btn-inazo">
-                科目名でiNAZO検索
-              </a>
-
-              <a
-                href={`https://inazo.hu-jagajaga.com/search?search=${teacherQuery}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-common btn-inazo">
-                教員名でiNAZO検索
-              </a>
-
-              <button
-                className="btn-common btn-back"
-                onClick={() => window.history.back()}>
-                {lang === "ja" ? "前のページに戻る" : "Go Back"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* シラバスのメインコンテンツ */}
-      <main className="main-content">
-        {/* 前半の表（基本情報用）：compactクラスを付与して行間を狭くする */}
-        <div className="syllabus-card" style={{ marginBottom: "40px" }}>
-          <div className="syllabus-grid compact">
-            {table1.map((row, index) => (
-              <div
-                key={index}
-                className={`syllabus-item ${row.fullWidth ? "full-width" : ""}`}>
-                <div className="syllabus-item-label">
-                  {lang === "ja" ? row.labelJa : row.labelEn}
-                </div>
-                <div className="syllabus-item-value">
-                  {lang === "ja" ? linkify(row.valueJa) : linkify(row.valueEn)}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* 後半の表（詳細情報） */}
-        {table2.length > 0 && (
-          <div className="syllabus-card" style={{ marginBottom: "60px" }}>
-            <div className="syllabus-grid">
-              {table2.map((row, index) => (
+        {/* シラバスのメインコンテンツ */}
+        <main className="main-content">
+          {/* 前半の表（基本情報用）：compactクラスを付与して行間を狭くする */}
+          <div className="syllabus-card" style={{ marginBottom: "40px" }}>
+            <div className="syllabus-grid compact">
+              {table1.map((row, index) => (
                 <div
                   key={index}
                   className={`syllabus-item ${row.fullWidth ? "full-width" : ""}`}>
@@ -860,10 +855,32 @@ const SyllabusModernUI = () => {
               ))}
             </div>
           </div>
-        )}
-      </main>
-    </div>
-  )
+
+          {/* 後半の表（詳細情報） */}
+          {table2.length > 0 && (
+            <div className="syllabus-card" style={{ marginBottom: "60px" }}>
+              <div className="syllabus-grid">
+                {table2.map((row, index) => (
+                  <div
+                    key={index}
+                    className={`syllabus-item ${row.fullWidth ? "full-width" : ""}`}>
+                    <div className="syllabus-item-label">
+                      {lang === "ja" ? row.labelJa : row.labelEn}
+                    </div>
+                    <div className="syllabus-item-value">
+                      {lang === "ja"
+                        ? linkify(row.valueJa)
+                        : linkify(row.valueEn)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
 }
 
 export default SyllabusModernUI
