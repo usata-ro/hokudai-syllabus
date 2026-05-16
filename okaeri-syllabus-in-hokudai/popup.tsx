@@ -196,9 +196,7 @@ const IndexPopup = () => {
           </div>
           <div
             style={{ fontSize: "0.75rem", color: "#555", lineHeight: "1.6" }}>
-            トグルを切り替えると設定が自動保存されます。
-            <br />
-            対象ページをリロードすると変更が反映されます。
+            トグルを切り替えると設定が変更されます。
           </div>
         </div>
 
