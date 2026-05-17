@@ -7,7 +7,7 @@
 ## 📸 スクリーンショット
 
 <details>
-  <summary>UIイメージを表示する（クリックで開閉）</summary>
+  <summary>UIイメージを表示する</summary>
 
   <table width="100%" cellspacing="0" cellpadding="4" border="0">
     <tr>
@@ -73,20 +73,17 @@
 
 詳細なインストール方法や利用手順は、[こちら（Releasesページ）](https://github.com/usata-ro/hokudai-syllabus/releases)を参照してください。
 
-## 🤝 開発への協力（バグ報告・機能提案）
+## 🤝 開発への協力
 
-学務Webシステムのアップデート等により、デザインが崩れたりボタンが動作しなくなったりした場合は、[Issues](https://github.com/usata-ro/hokudai-syllabus/issues) より不具合のご報告をお願いします。プルリクエスト（PR）も大歓迎です！
+学務Webシステムのアップデート等により、デザインが崩れたりボタンが動作しなくなったりした場合は、[Issues](https://github.com/usata-ro/hokudai-syllabus/issues) より不具合のご報告をお願いします。プルリクエストも大歓迎です！
 
 ## 📄 ライセンス
 
 MIT License
-
----
 
 **⚠️ 注意事項**
 - この拡張機能は、個人の開発による非公式ツールです。大学公式とは一切関係ありません。
 - 学務システムのアップデートや仕様変更により、予告なく動作しなくなる可能性があります。
 - 万が一シラバスの利用や履修登録等に支障が出た場合は、直ちに本拡張機能を無効化してください。
 
----
 Made with ❤️ for better work-life balance
