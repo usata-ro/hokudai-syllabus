@@ -112,6 +112,8 @@ export const getStyle: PlasmoGetStyle = () => {
       font-weight: bold;
       transition: all 0.2s ease;
       user-select: none;
+      display: flex;
+      align-items: center
     }
     .chip:hover { border-color: var(--main-color); background: #f0f7f1; }
     .chip.active { background: var(--main-color); color: white; border-color: var(--main-color); box-shadow: 0 4px 10px rgba(31,140,50,0.2); }
@@ -163,18 +165,17 @@ export const getStyle: PlasmoGetStyle = () => {
     .condition-label { font-weight: bold; color: #888; margin-bottom: 2px; font-size: 0.85rem; }
     .condition-val { font-weight: 800; color: var(--main-color); line-height: 1.2; font-size: 1rem; }
 
-    /* 💡 カラム幅の厳格な設定（1100pxコンテナへの最適化） */
     .result-table { width: 100%; border-collapse: separate; border-spacing: 0; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,28,12,0.04); border: 1px solid var(--border-color); table-layout: fixed; }
     .result-table th { background: var(--table-th-bg); color: var(--main-color); padding: 18px 12px; text-align: left; font-weight: 800; font-size: 0.9rem; border-bottom: 2px solid var(--border-color); }
     .result-table td { padding: 16px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-size: 1rem; overflow-wrap: break-word; }
     .result-table tr:hover td { background-color: #f9fdfa; }
 
     .col-term { width: 75px; }
-    .col-title { width: 180px; } /* 💡 以前の半分程度に縮小。ブラウザのキャッシュ対策として明示。 */
+    .col-title { width: 180px; }
     .col-staff { width: 220px; }
     .col-time { width: 85px; }  
     .col-syl { width: 140px; }
-    .col-inazo { width: 200px; } /* 右側の余白を埋めるためにボタン列を最大化 */
+    .col-inazo { width: 200px; }
 
     .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 60px; }
     .page-btn { min-width: 44px; height: 44px; border-radius: 12px; background: white; border: 2px solid var(--border-color); color: var(--main-color); font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
