@@ -400,6 +400,16 @@ const App = () => {
         setView(isCurrentSearch ? "search" : "list")
         if (form) form.style.display = "none"
 
+        // 👇 🌟 ここに追加：学務システムのボタン状態から現在の言語を自動判定
+        const engBtn = document.getElementById(
+          "ctl00_imgBtnEngBtm"
+        ) as HTMLAnchorElement | null
+        if (engBtn && engBtn.getAttribute("disabled") === "disabled") {
+          setLang("en")
+        } else {
+          setLang("ja")
+        }
+
         const rootHtml = document.documentElement
         const rootBody = document.body
         rootHtml.style.minWidth = "100vw"
@@ -621,6 +631,22 @@ const App = () => {
     }
   }
 
+  const handleLangChange = (targetLang: "ja" | "en") => {
+    setLang(targetLang)
+
+    const form = document.getElementById("aspnetForm") as HTMLFormElement
+    const eventTarget = document.getElementById(
+      "__EVENTTARGET"
+    ) as HTMLInputElement
+
+    if (form && eventTarget) {
+      // 学務システム裏側の言語切り替えボタンのポストバックを安全に実行
+      eventTarget.value =
+        targetLang === "ja" ? "ctl00$imgBtnJpnBtm" : "ctl00$imgBtnEngBtm"
+      form.submit()
+    }
+  }
+
   // =================================================================
   // 🌟 1. すべての条件をリセットする関数（開講年度は最新、それ以外は初期化）
   // =================================================================
@@ -821,14 +847,15 @@ const App = () => {
             <div className="header-left">
               <h1>北海道大学シラバス検索システム</h1>
               <div className="lang-toggle">
+                {/* 🌟 onClick を handleLangChange に変更 */}
                 <button
                   className={`lang-btn ${lang === "ja" ? "active" : ""}`}
-                  onClick={() => setLang("ja")}>
+                  onClick={() => handleLangChange("ja")}>
                   日本語
                 </button>
                 <button
                   className={`lang-btn ${lang === "en" ? "active" : ""}`}
-                  onClick={() => setLang("en")}>
+                  onClick={() => handleLangChange("en")}>
                   English
                 </button>
               </div>
@@ -1309,16 +1336,22 @@ const App = () => {
                   <tr key={idx}>
                     <td>
                       <span style={{ fontSize: "0.85rem", fontWeight: "bold" }}>
-                        {item.semester.ja}
+                        {item.semester[lang]} {/* 🌟 .ja から [lang] に変更 */}
                       </span>
                     </td>
                     <td style={{ fontWeight: "800", lineHeight: "1.4" }}>
-                      {item.title.ja}
+                      {item.title[lang]} {/* 🌟 .ja から [lang] に変更 */}
                     </td>
                     <td>
                       <span
                         style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
-                        {item.teacher.ja}
+                        {item.teacher[lang]} {/* 🌟 .ja から [lang] に変更 */}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
+                        {item.time[lang]} {/* 🌟 .ja から [lang] に変更 */}
                       </span>
                     </td>
                     <td>
