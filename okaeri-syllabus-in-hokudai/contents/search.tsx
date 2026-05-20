@@ -216,6 +216,7 @@ export const getStyle: PlasmoGetStyle = () => {
     .col-time { width: 85px; }  
     .col-syl { width: 140px; }
     .col-inazo { width: 200px; }
+    .col-grad { width: 90px; }
 
     .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 60px; }
     .page-btn { min-width: 44px; height: 44px; border-radius: 12px; background: white; border: 2px solid var(--border-color); color: var(--main-color); font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
@@ -401,6 +402,7 @@ const UI_LANG = {
     thTime: "曜日時限",
     thSyllabus: "シラバス",
     thInazo: "iNAZO",
+    thGrad: "対象年次",
     btnJp: "日本語",
     btnEn: "EN",
     btnSbj: "科目名",
@@ -457,6 +459,7 @@ const UI_LANG = {
     thTime: "Day / Period",
     thSyllabus: "Syllabus",
     thInazo: "iNAZO",
+    thGrad: "Target Year",
     btnJp: "Japanese",
     btnEn: "EN",
     btnSbj: "Subject",
@@ -663,22 +666,26 @@ const App = () => {
   }
 
   const scrapeExhaustiveConditions = () => {
+    // 🌟 修正：ハードコードされた日本語を翻訳辞書連動へ変更
     const mapping = [
-      { id: "ctl00_phContents_lbl_year", label: "年度" },
-      { id: "ctl00_phContents_lbl_org", label: "課程" },
-      { id: "ctl00_phContents_lbl_fac", label: "学部" },
-      { id: "ctl00_phContents_lbl_grad", label: "年次" },
-      { id: "ctl00_phContents_lbl_lctterm", label: "学期" },
-      { id: "ctl00_phContents_lbl_day", label: "曜日" },
-      { id: "ctl00_phContents_lbl_time", label: "時限" },
-      { id: "ctl00_phContents_lbl_sbj_sort", label: "科目種別" },
-      { id: "ctl00_phContents_lbl_sbj", label: "科目名" },
-      { id: "ctl00_phContents_lbl_staff", label: "教員名" },
-      { id: "ctl00_phContents_lbl_keyword", label: "キーワード" },
-      { id: "ctl00_phContents_lbl_all", label: "全文検索" },
-      { id: "ctl00_phContents_lbl_experience", label: "実務経験" },
-      { id: "ctl00_phContents_lbl_lang", label: "言語" },
-      { id: "ctl00_phContents_lbl_lct_do_type", label: "方式" },
+      { id: "ctl00_phContents_lbl_year", label: UI_LANG[lang].year },
+      { id: "ctl00_phContents_lbl_org", label: UI_LANG[lang].org },
+      { id: "ctl00_phContents_lbl_fac", label: UI_LANG[lang].faculty },
+      { id: "ctl00_phContents_lbl_grad", label: UI_LANG[lang].grad },
+      { id: "ctl00_phContents_lbl_lctterm", label: UI_LANG[lang].term },
+      { id: "ctl00_phContents_lbl_day", label: UI_LANG[lang].day },
+      { id: "ctl00_phContents_lbl_time", label: UI_LANG[lang].time },
+      { id: "ctl00_phContents_lbl_sbj_sort", label: UI_LANG[lang].sort },
+      { id: "ctl00_phContents_lbl_sbj", label: UI_LANG[lang].sbj },
+      { id: "ctl00_phContents_lbl_staff", label: UI_LANG[lang].staff },
+      { id: "ctl00_phContents_lbl_keyword", label: UI_LANG[lang].keywordParam },
+      { id: "ctl00_phContents_lbl_all", label: UI_LANG[lang].all },
+      {
+        id: "ctl00_phContents_lbl_experience",
+        label: UI_LANG[lang].experience
+      },
+      { id: "ctl00_phContents_lbl_lang", label: UI_LANG[lang].langCode },
+      { id: "ctl00_phContents_lbl_lct_do_type", label: UI_LANG[lang].method },
       { id: "ctl00_phContents_lbl_sdgs", label: "SDGs" }
     ]
     const conditions = mapping
@@ -1407,7 +1414,8 @@ const App = () => {
               {showSdgs && (
                 <div className="accordion-content">
                   <div className="sdgs-list">
-                    {SDGS_LABELS.map((label, i) => (
+                    {/* 🌟 1. SDGsのラベル表示を言語に応じて切り替え */}
+                    {SDGS_LABELS[lang].map((label, i) => (
                       <label key={i + 1} className="sdgs-item">
                         <input
                           type="checkbox"
@@ -1430,12 +1438,13 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 検索ボタン */}
             <button className="btn-submit" onClick={handleFinalSearch}>
-              {UI_LANG[lang].submitBtn}
+              シラバスを検索する
             </button>
           </div>
         )}
+
+        {/* 🌟 2. 検索結果一覧画面の多言語化 ＆ テーブル列ズレ大修正 */}
         {view === "list" && (
           <div>
             <div
@@ -1447,11 +1456,11 @@ const App = () => {
               }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: "1.85rem", fontWeight: 800 }}>
-                  検索結果
+                  {UI_LANG[lang].resultTitle}
                 </h2>
               </div>
               <button className="btn-back-link" onClick={handleBackToSearch}>
-                ← 検索画面に戻る
+                {UI_LANG[lang].backToSearch}
               </button>
             </div>
 
@@ -1465,7 +1474,7 @@ const App = () => {
                     fontSize: "1.1rem",
                     color: "var(--main-color)"
                   }}>
-                  🔍 現在の検索条件を表示・変更
+                  {UI_LANG[lang].currentConditionsTitle}
                 </span>
                 <span style={{ fontSize: "1rem" }}>
                   {showConditions ? "▲" : "▼"}
@@ -1486,12 +1495,12 @@ const App = () => {
             <table className="result-table">
               <thead>
                 <tr>
-                  <th className="col-term">学期</th>
-                  <th className="col-title">科目名</th>
-                  <th className="col-staff">担当教員</th>
-                  <th className="col-time">曜日時限</th>
-                  <th className="col-syl">シラバス</th>
-                  <th className="col-inazo">iNAZO</th>
+                  <th className="col-term">{UI_LANG[lang].thSemester}</th>
+                  <th className="col-title">{UI_LANG[lang].thTitle}</th>
+                  <th className="col-staff">{UI_LANG[lang].thTeacher}</th>
+                  <th className="col-time">{UI_LANG[lang].thTime}</th>
+                  <th className="col-syl">{UI_LANG[lang].thSyllabus}</th>
+                  <th className="col-inazo">{UI_LANG[lang].thInazo}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1499,30 +1508,25 @@ const App = () => {
                   <tr key={idx}>
                     <td>
                       <span style={{ fontSize: "0.85rem", fontWeight: "bold" }}>
-                        {item.semester[lang]} {/* 🌟 .ja から [lang] に変更 */}
+                        {item.semester[lang]}
                       </span>
                     </td>
                     <td style={{ fontWeight: "800", lineHeight: "1.4" }}>
-                      {item.title[lang]} {/* 🌟 .ja から [lang] に変更 */}
+                      {item.title[lang]}
                     </td>
                     <td>
                       <span
                         style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
-                        {item.teacher[lang]} {/* 🌟 .ja から [lang] に変更 */}
+                        {item.teacher[lang]}
                       </span>
                     </td>
                     <td>
                       <span
                         style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-                        {item.time[lang]} {/* 🌟 .ja から [lang] に変更 */}
+                        {item.time[lang]}
                       </span>
                     </td>
-                    <td>
-                      <span
-                        style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-                        {item.time.ja}
-                      </span>
-                    </td>
+                    {/* 💡 ズレの原因だった重複 td を削除し、ヘッダーと綺麗に整列させました */}
                     <td>
                       <div style={{ display: "flex", gap: "4px" }}>
                         {item.links.jp && (
@@ -1530,7 +1534,7 @@ const App = () => {
                             href={item.links.jp}
                             target="_blank"
                             className="btn-action btn-jp">
-                            日本語
+                            {UI_LANG[lang].btnJp}
                           </a>
                         )}
                         {item.links.en && (
@@ -1538,7 +1542,7 @@ const App = () => {
                             href={item.links.en}
                             target="_blank"
                             className="btn-action btn-en">
-                            EN
+                            {UI_LANG[lang].btnEn}
                           </a>
                         )}
                       </div>
@@ -1549,13 +1553,13 @@ const App = () => {
                           href={`https://inazo.hu-jagajaga.com/search?search=${encodeURIComponent(item.title.ja)}`}
                           target="_blank"
                           className="btn-action btn-inazo-small">
-                          科目名
+                          {UI_LANG[lang].btnSbj}
                         </a>
                         <a
-                          href={`https://inazo.hu-jagajaga.com/search?search=${encodeURIComponent(item.teacher.ja.split(/[（(]/)[0].trim())}`}
+                          href={`https://inazo.hu-jagajaga.com/search?search=${encodeURIComponent(item.teacher.ja.split("\n")[0].split(/[（(]/)[0].trim())}`}
                           target="_blank"
                           className="btn-action btn-inazo-small">
-                          教員名
+                          {UI_LANG[lang].btnStaff}
                         </a>
                       </div>
                     </td>
@@ -1579,7 +1583,7 @@ const App = () => {
                   <div
                     className="page-btn next-btn"
                     onClick={() => handlePageClick(nextPageText)}>
-                    次のページへ &gt;
+                    {UI_LANG[lang].nextPage}
                   </div>
                 )}
               </div>
