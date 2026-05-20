@@ -2,14 +2,6 @@ import React from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
-/**
- * 💡 開発者向けの修正メモ:
- * 1. エラー解消のためインポートとコンポーネント構造を再確認しました。
- * 2. グラデーションを初期の緑ベースに戻し、左右を反転（明るい緑 -> 暗い緑）させました。
- * 3. チェックボックスの代わりに、アニメーション付きのトグルスイッチを採用しています。
- */
-
-// 💡 モダンなトグルスイッチコンポーネント
 const Toggle = ({
   checked,
   onChange
@@ -50,7 +42,6 @@ const Toggle = ({
 }
 
 const IndexPopup = () => {
-  // ストレージを利用して設定を永続化。各画面のContent Scriptとキー名を同期します。
   const [isSearchActive, setIsSearchActive] = useStorage("isSearchActive", true)
   const [isSearchListActive, setIsSearchListActive] = useStorage(
     "isSearchListActive",
@@ -70,13 +61,12 @@ const IndexPopup = () => {
         boxSizing: "border-box",
         overflow: "hidden"
       }}>
-      {/* 💡 ヘッダー部分：最初のグラデーションの左右を入れ替え（明るい緑 -> 暗い緑） */}
       <div
         style={{
           background:
-            "linear-gradient(90deg, #2eb845 0%, #1F8C32 50%, #166524 100%)",
+            "linear-gradient(135deg, #4CAF50 0%, #1F8C32 50%, #166524 100%)",
           color: "#ffffff",
-          padding: "24px 16px",
+          padding: "18px 16px",
           textAlign: "center",
           boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
           borderBottom: "1px solid #d1e6d5"
@@ -84,13 +74,13 @@ const IndexPopup = () => {
         <h2
           style={{
             margin: 0,
-            fontSize: "1.25rem",
+            fontSize: "1rem",
             fontWeight: "bold",
             letterSpacing: "0.05em",
             color: "#ffffff",
             textShadow: "0 1px 2px rgba(0,0,0,0.3)"
           }}>
-          Okaeri-Hokudai-Syllabus
+          北大シラバス検索システム
         </h2>
         <p
           style={{
@@ -100,7 +90,7 @@ const IndexPopup = () => {
             color: "#ffffff",
             fontWeight: "bold"
           }}>
-          北大シラバスダッシュボード
+          Okaeri Syllabus in Hokudai
         </p>
       </div>
 
@@ -116,7 +106,7 @@ const IndexPopup = () => {
             lineHeight: "1",
             fontWeight: "bold"
           }}>
-          機能の有効化
+          機能の有効化 / Enable Features
         </h3>
 
         {/* 設定トグル群 */}
@@ -124,21 +114,21 @@ const IndexPopup = () => {
           {
             id: "isSearchActive",
             label: "検索入力",
-            desc: "シラバス検索への適用",
+            desc: "Search Page",
             state: isSearchActive,
             setter: setIsSearchActive
           },
           {
             id: "isSearchListActive",
             label: "検索結果",
-            desc: "検索結果一覧への適用",
+            desc: "Search Results",
             state: isSearchListActive,
             setter: setIsSearchListActive
           },
           {
             id: "isDetailActive",
             label: "詳細表示",
-            desc: "シラバス詳細画面への適用",
+            desc: "Details Page",
             state: isDetailActive,
             setter: setIsDetailActive
           }
@@ -172,33 +162,6 @@ const IndexPopup = () => {
             />
           </div>
         ))}
-
-        {/* 💡 使い方ガイダンス */}
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "14px",
-            backgroundColor: "#f9fcf9",
-            border: "1px solid #e8f0e8",
-            borderRadius: "12px"
-          }}>
-          <div
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: "bold",
-              color: "#1F8C32",
-              marginBottom: "6px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}>
-            <span style={{ fontSize: "1rem" }}>💡</span> 使い方
-          </div>
-          <div
-            style={{ fontSize: "0.75rem", color: "#555", lineHeight: "1.6" }}>
-            トグルを切り替えると設定が変更されます。
-          </div>
-        </div>
 
         {/* GitHubリンク */}
         <div
@@ -245,9 +208,7 @@ const IndexPopup = () => {
             color: "#999",
             lineHeight: "1.5"
           }}>
-          Version 1.0.0
-          <br />
-          Developed for Hokudai by usata-ro
+          Version 1.2.0 | Okaeri Syllabus in Hokudai
         </div>
       </div>
     </div>
