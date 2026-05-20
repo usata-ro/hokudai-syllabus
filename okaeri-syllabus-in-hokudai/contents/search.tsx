@@ -408,38 +408,41 @@ const App = () => {
       methods: getOpts("ctl00_phContents_ddl_lct_do_type")
     })
 
+    // 値を取得するための便利なヘルパー関数を用意
+    const getVal = (id: string) =>
+      (document.getElementById(id) as HTMLInputElement | HTMLSelectElement)
+        ?.value || ""
+    const getSelectVal = (id: string) =>
+      (document.getElementById(id) as HTMLSelectElement)?.value || "NULL"
+    const getDayVal = (id: string) =>
+      (document.getElementById(id) as HTMLSelectElement)?.value || "-1"
+
+    // チェックされているSDGsの値を配列として
+    const checkedSdgs = Array.from(
+      document.querySelectorAll(
+        'input[type="checkbox"][name*="cblSDGs"]:checked'
+      )
+    ).map((cb) => (cb as HTMLInputElement).value)
+
+    //状態を更新
     setInputState((prev) => ({
       ...prev,
-      year:
-        (
-          document.getElementById(
-            "ctl00_phContents_ddl_year"
-          ) as HTMLSelectElement
-        )?.value || "",
-      org:
-        (
-          document.getElementById(
-            "ctl00_phContents_ddl_org"
-          ) as HTMLSelectElement
-        )?.value || "NULL",
-      faculty:
-        (
-          document.getElementById(
-            "ctl00_phContents_ddl_fac"
-          ) as HTMLSelectElement
-        )?.value || "NULL",
-      grad:
-        (
-          document.getElementById(
-            "ctl00_phContents_ddl_grad"
-          ) as HTMLSelectElement
-        )?.value || "NULL",
-      time:
-        (
-          document.getElementById(
-            "ctl00_phContents_ddl_time"
-          ) as HTMLSelectElement
-        )?.value || "NULL"
+      year: getVal("ctl00_phContents_ddl_year"),
+      org: getSelectVal("ctl00_phContents_ddl_org"),
+      faculty: getSelectVal("ctl00_phContents_ddl_fac"),
+      grad: getSelectVal("ctl00_phContents_ddl_grad"),
+      term: getSelectVal("ctl00_phContents_ddl_lctterm"), // 追加: 学期
+      day: getDayVal("ctl00_phContents_ddl_day"), // 追加: 曜日
+      time: getSelectVal("ctl00_phContents_ddl_time"),
+      sort: getSelectVal("ctl00_phContents_ddl_sbj_sort"), // 追加: 科目種別
+      sbj: getVal("ctl00_phContents_txt_sbj_Search"), // 追加: 科目名
+      staff: getVal("ctl00_phContents_txt_staff_Search"), // 追加: 教員名
+      keyword: getVal("ctl00_phContents_txt_keyword_Search"), // 追加: キーワード
+      all: getVal("ctl00_phContents_txt_all_Search"), // 追加: 全文検索
+      experience: getSelectVal("ctl00_phContents_ddl_experience"), // 追加: 実務経験
+      langCode: getSelectVal("ctl00_phContents_ddl_lang"), // 追加: 言語コード
+      method: getSelectVal("ctl00_phContents_ddl_lct_do_type"), // 追加: 授業実施方式
+      sdgs: checkedSdgs // 追加: SDGs
     }))
   }
 
