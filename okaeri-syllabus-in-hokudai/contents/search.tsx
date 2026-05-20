@@ -392,6 +392,24 @@ const App = () => {
       form.submit() // CSPエラーにならないネイティブ送信
     }
   }
+  //ここに handleYearChange を追加する
+  const handleYearChange = (val: string) => {
+    setInputState((prev) => ({ ...prev, year: val }))
+
+    const form = document.getElementById("aspnetForm") as HTMLFormElement
+    const eventTarget = document.getElementById(
+      "__EVENTTARGET"
+    ) as HTMLInputElement
+    const ddlYear = document.getElementById(
+      "ctl00_phContents_ddl_year"
+    ) as HTMLSelectElement
+
+    if (form && eventTarget && ddlYear) {
+      ddlYear.value = val
+      eventTarget.value = "ctl00$phContents$ddl_year"
+      form.submit() // CSPエラーにならないネイティブ送信
+    }
+  }
 
   const scrapeExhaustiveConditions = () => {
     const mapping = [
@@ -630,9 +648,7 @@ const App = () => {
                   <div
                     key={y.value}
                     className={`chip ${inputState.year === y.value ? "active" : ""}`}
-                    onClick={() =>
-                      setInputState({ ...inputState, year: y.value })
-                    }>
+                    onClick={() => handleYearChange(y.value)}>
                     {y.text}
                   </div>
                 ))}
@@ -645,9 +661,7 @@ const App = () => {
                       ? inputState.year
                       : ""
                   }
-                  onChange={(e) =>
-                    setInputState({ ...inputState, year: e.target.value })
-                  }>
+                  onChange={(e) => handleYearChange(e.target.value)}>
                   <option value="">過去の年度を選択...</option>
                   {options.years.slice(3).map((y) => (
                     <option key={y.value} value={y.value}>
