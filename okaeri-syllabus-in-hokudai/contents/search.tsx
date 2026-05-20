@@ -210,13 +210,13 @@ export const getStyle: PlasmoGetStyle = () => {
     .result-table td { padding: 16px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-size: 1rem; overflow-wrap: break-word; }
     .result-table tr:hover td { background-color: #f9fdfa; }
 
-    .col-term { width: 75px; }
+    .col-term { width: 70px; }
     .col-title { width: 180px; }
-    .col-staff { width: 220px; }
-    .col-time { width: 85px; }  
-    .col-syl { width: 140px; }
-    .col-inazo { width: 200px; }
-    .col-grad { width: 90px; }
+    .col-staff { width: 210px; }
+    .col-time { width: 80px; }  
+    .col-syl { width: 125px; }
+    .col-inazo { width: 180px; }
+    .col-grad { width: 50px; }
 
     .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 60px; }
     .page-btn { min-width: 44px; height: 44px; border-radius: 12px; background: white; border: 2px solid var(--border-color); color: var(--main-color); font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
@@ -749,6 +749,7 @@ const App = () => {
         title: splitLang(cells[2]),
         teacher: splitLang(cells[4]),
         time: splitLang(cells[5]),
+        grad: cells[6]?.textContent?.trim() || "",
         links: { jp: jpLink, en: enLink }
       }
     })
@@ -1496,6 +1497,7 @@ const App = () => {
               <thead>
                 <tr>
                   <th className="col-term">{UI_LANG[lang].thSemester}</th>
+                  <th className="col-grad">{UI_LANG[lang].thGrad}</th>
                   <th className="col-title">{UI_LANG[lang].thTitle}</th>
                   <th className="col-staff">{UI_LANG[lang].thTeacher}</th>
                   <th className="col-time">{UI_LANG[lang].thTime}</th>
@@ -1511,9 +1513,17 @@ const App = () => {
                         {item.semester[lang]}
                       </span>
                     </td>
+
+                    <td>
+                      <span style={{ fontSize: "0.85rem", fontWeight: "bold" }}>
+                        {item.grad}
+                      </span>
+                    </td>
+
                     <td style={{ fontWeight: "800", lineHeight: "1.4" }}>
                       {item.title[lang]}
                     </td>
+
                     <td>
                       <span
                         style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
