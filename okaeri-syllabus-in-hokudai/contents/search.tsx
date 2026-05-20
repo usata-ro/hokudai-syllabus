@@ -309,25 +309,161 @@ export const getStyle: PlasmoGetStyle = () => {
   return style
 }
 
-const SDGS_LABELS = [
-  "1. 貧困をなくそう",
-  "2. 飢餓をゼロに",
-  "3. すべての人に健康と福祉を",
-  "4. 質の高い教育をみんなに",
-  "5. ジェンダー平等を実現しよう",
-  "6. 安全な水とトイレを世界中に",
-  "7. エネルギーをみんなにそしてクリーンに",
-  "8. 働きがいも経済成長も",
-  "9. 産業と技術革新の基盤をつくろう",
-  "10. 人や国の不平等をなくそう",
-  "11. 住み続けられるまちづくりを",
-  "12. つくる責任つかう責任",
-  "13. 気候変動に具体的な対策を",
-  "14. 海の豊かさを守ろう",
-  "15. 陸の豊かさも守ろう",
-  "16. 平和と公正をすべての人に",
-  "17. パートナーシップで目標を達成しよう"
-]
+const SDGS_LABELS = {
+  ja: [
+    "1. 貧混をなくそう",
+    "2. 飢餓をゼロに",
+    "3. すべての人に健康と福祉を",
+    "4. 質の高い教育をみんなに",
+    "5. ジェンダー平等を実現しよう",
+    "6. 安全な水とトイレを世界中に",
+    "7. エネルギーをみんなにそしてクリーンに",
+    "8. 働きがいも経済成長も",
+    "9. 産業と技術革新の基盤をつくろう",
+    "10. 人や国の不平等をなくそう",
+    "11. 住み続けられるまちづくりを",
+    "12. つくる責任つかう責任",
+    "13. 気候変動に具体的な対策を",
+    "14. 海の豊かさを守ろう",
+    "15. 陸の豊かさも守ろう",
+    "16. 平和と公正をすべての人に",
+    "17. パートナーシップで目標を達成しよう"
+  ],
+  en: [
+    "1. No Poverty",
+    "2. Zero Hunger",
+    "3. Good Health and Well-being",
+    "4. Quality Education",
+    "5. Gender Equality",
+    "6. Clean Water and Sanitation",
+    "7. Affordable and Clean Energy",
+    "8. Decent Work and Economic Growth",
+    "9. Industry, Innovation, and Infrastructure",
+    "10. Reducing Inequality",
+    "11. Sustainable Cities and Communities",
+    "12. Responsible Consumption and Production",
+    "13. Climate Action",
+    "14. Life Below Water",
+    "15. Life On Land",
+    "16. Peace, Justice, and Strong Institutions",
+    "17. Partnerships for the Goals"
+  ]
+}
+
+const UI_LANG = {
+  ja: {
+    basicConditions: "基本条件",
+    resetAll: "すべての条件をリセット",
+    year: "開講年度",
+    required: "必須",
+    pastYear: "過去の年度を選択...",
+    org: "課程区分",
+    faculty: "開講学部・研究科",
+    timetableConditions: "時間割条件",
+    grad: "対象年次",
+    term: "開講学期",
+    day: "開講曜日",
+    time: "開講時限",
+    any: "指定なし",
+    keywordsTitle: "キーワード",
+    resetLower: "以下の項目をリセット",
+    sbj: "科目名・講義題目",
+    sbjPlaceholder: "例：憲法",
+    staff: "教員名",
+    staffPlaceholder: "氏名を入力",
+    all: "全文検索",
+    allPlaceholder: "シラバス内の内容を一括検索",
+    advancedTitle: "詳しく検索",
+    advancedHeader: "実務経験・方式・その他条件",
+    keywordParam: "キーワード検索",
+    keywordPlaceholder: "補助的なキーワードを入力",
+    experience: "実務経験のある教員等による授業科目",
+    expYes: "該当する",
+    expNo: "該当しない",
+    sort: "科目種別",
+    langCode: "言語コード",
+    method: "授業実施方式",
+    sdgsTitle: "SDGs 条件",
+    sdgsHeader: "SDGsの項目を選択（クリックで開閉）",
+    submitBtn: "シラバスを検索する",
+    errYear: "開講年度を選択してください。",
+    errOrg: "課程区分を選択してください。",
+    errFaculty: "開講学部・研究科を選択してください。",
+    facultyLabel: "学部・研究科を選択",
+
+    /* 🌟 追加：検索結果画面（一覧）用の日本語辞書 */
+    resultTitle: "検索結果",
+    backToSearch: "← 検索画面に戻る",
+    currentConditionsTitle: "🔍 現在の検索条件を表示・変更",
+    thSemester: "学期",
+    thTitle: "科目名",
+    thTeacher: "担当教員",
+    thTime: "曜日時限",
+    thSyllabus: "シラバス",
+    thInazo: "iNAZO",
+    btnJp: "日本語",
+    btnEn: "EN",
+    btnSbj: "科目名",
+    btnStaff: "教員名",
+    nextPage: "次のページへ >"
+  },
+  en: {
+    basicConditions: "Basic Conditions",
+    resetAll: "Reset All Conditions",
+    year: "Academic Year",
+    required: "Required",
+    pastYear: "Select past year...",
+    org: "Course Classification",
+    faculty: "Faculty / Graduate School",
+    timetableConditions: "Timetable Conditions",
+    grad: "Target Year",
+    term: "Semester",
+    day: "Day of Week",
+    time: "Period",
+    any: "Any",
+    keywordsTitle: "Keywords",
+    resetLower: "Reset Below Items",
+    sbj: "Subject / Course Title",
+    sbjPlaceholder: "e.g. Constitution",
+    staff: "Instructor's Name",
+    staffPlaceholder: "Enter name",
+    all: "Full-text Search",
+    allPlaceholder: "Search all syllabus contents",
+    advancedTitle: "Advanced Search",
+    advancedHeader: "Practical Experience / Instruction Method / Others",
+    keywordParam: "Keyword Search",
+    keywordPlaceholder: "Enter supplementary keywords",
+    experience: "Courses taught by instructors with practical experience",
+    expYes: "Applicable",
+    expNo: "Not applicable",
+    sort: "Subject Type",
+    langCode: "Language Code",
+    method: "Instruction Method",
+    sdgsTitle: "SDGs Conditions",
+    sdgsHeader: "Select SDGs items (Click to expand/collapse)",
+    submitBtn: "Search Syllabus",
+    errYear: "Please select an academic year.",
+    errOrg: "Please select a course classification.",
+    errFaculty: "Please select a faculty or graduate school.",
+    facultyLabel: "Select Faculty / Graduate School",
+
+    /* 🌟 追加：検索結果画面（一覧）用の英語辞書 */
+    resultTitle: "Search Results",
+    backToSearch: "← Back to Search Page",
+    currentConditionsTitle: "🔍 Show / Modify Current Search Conditions",
+    thSemester: "Semester",
+    thTitle: "Subject Title",
+    thTeacher: "Instructor",
+    thTime: "Day / Period",
+    thSyllabus: "Syllabus",
+    thInazo: "iNAZO",
+    btnJp: "Japanese",
+    btnEn: "EN",
+    btnSbj: "Subject",
+    btnStaff: "Instructor",
+    nextPage: "Next Page >"
+  }
+}
 
 const App = () => {
   const [isSearchActive] = useStorage("isSearchActive", true)
@@ -498,8 +634,9 @@ const App = () => {
 
   const groupedFaculties = useMemo(() => {
     const items = options.faculties.filter((f) => f.value !== "NULL")
-    return [{ label: "学部・研究科を選択", items }]
-  }, [options.faculties])
+    // 🌟 見出しテキストを言語に応じて切り替え、依存配列に lang を追加
+    return [{ label: UI_LANG[lang].facultyLabel, items }]
+  }, [options.faculties, lang])
 
   const handleOrgChange = (val: string) => {
     const isLawSchool = val === "05"
@@ -879,7 +1016,7 @@ const App = () => {
       <main className="container">
         {view === "search" && (
           <div className="form-card">
-            {/* 🌟 変更：タイトルの右側に「すべての条件をリセット」を設置 */}
+            {/* 🌟 基本条件ヘッダー */}
             <div
               style={{
                 display: "flex",
@@ -888,16 +1025,18 @@ const App = () => {
                 marginBottom: "24px"
               }}>
               <div className="section-title" style={{ marginBottom: 0 }}>
-                基本条件
+                {UI_LANG[lang].basicConditions}
               </div>
               <button className="btn-reset-text" onClick={handleResetAll}>
-                すべての条件をリセット
+                {UI_LANG[lang].resetAll}
               </button>
             </div>
 
+            {/* 🌟 開講年度 */}
             <div className={`input-group ${errors.year ? "has-error" : ""}`}>
               <label className="input-label">
-                開講年度 <span className="required-badge">必須</span>
+                {UI_LANG[lang].year}{" "}
+                <span className="required-badge">{UI_LANG[lang].required}</span>
               </label>
               <div className="chip-group">
                 {options.years.slice(0, 3).map((y) => (
@@ -919,7 +1058,7 @@ const App = () => {
                   }
                   onChange={(e) => handleYearChange(e.target.value)}>
                   <option value="" disabled hidden>
-                    過去の年度を選択...
+                    {UI_LANG[lang].pastYear}
                   </option>
                   {options.years.slice(3).map((y) => (
                     <option key={y.value} value={y.value}>
@@ -929,13 +1068,15 @@ const App = () => {
                 </select>
               </div>
               {errors.year && (
-                <div className="error-text">開講年度を選択してください。</div>
+                <div className="error-text">{UI_LANG[lang].errYear}</div>
               )}
             </div>
 
+            {/* 🌟 課程区分 */}
             <div className={`input-group ${errors.org ? "has-error" : ""}`}>
               <label className="input-label">
-                課程区分 <span className="required-badge">必須</span>
+                {UI_LANG[lang].org}{" "}
+                <span className="required-badge">{UI_LANG[lang].required}</span>
               </label>
               <div className="chip-group">
                 {options.orgs.map((o) => (
@@ -948,13 +1089,15 @@ const App = () => {
                 ))}
               </div>
               {errors.org && (
-                <div className="error-text">課程区分を選択してください。</div>
+                <div className="error-text">{UI_LANG[lang].errOrg}</div>
               )}
             </div>
 
+            {/* 🌟 開講学部 */}
             <div className={`input-group ${errors.faculty ? "has-error" : ""}`}>
               <label className="input-label">
-                開講学部・研究科 <span className="required-badge">必須</span>
+                {UI_LANG[lang].faculty}{" "}
+                <span className="required-badge">{UI_LANG[lang].required}</span>
               </label>
               <div className="faculty-container">
                 {groupedFaculties.map((group) => (
@@ -978,14 +1121,13 @@ const App = () => {
                 ))}
               </div>
               {errors.faculty && (
-                <div className="error-text">
-                  開講学部・研究科を選択してください。
-                </div>
+                <div className="error-text">{UI_LANG[lang].errFaculty}</div>
               )}
             </div>
 
+            {/* 🌟 時間割条件 */}
             <div className="section-title" style={{ marginTop: "40px" }}>
-              時間割条件
+              {UI_LANG[lang].timetableConditions}
             </div>
             <div
               style={{
@@ -993,8 +1135,9 @@ const App = () => {
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gap: "24px"
               }}>
+              {/* 対象年次 */}
               <div className="input-group">
-                <label className="input-label">対象年次</label>
+                <label className="input-label">{UI_LANG[lang].grad}</label>
                 <div className="chip-group">
                   {options.grads.map((g) => (
                     <div
@@ -1003,15 +1146,18 @@ const App = () => {
                       onClick={() =>
                         setInputState({ ...inputState, grad: g.value })
                       }>
-                      {g.text === "選択してください"
-                        ? "指定なし"
+                      {g.text.includes("選択してください") ||
+                      g.text.includes("Select")
+                        ? UI_LANG[lang].any
                         : g.text.replace("次", "")}
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* 開講学期 */}
               <div className="input-group">
-                <label className="input-label">開講学期</label>
+                <label className="input-label">{UI_LANG[lang].term}</label>
                 <div className="chip-group">
                   {options.terms.map((t) => (
                     <div
@@ -1025,8 +1171,10 @@ const App = () => {
                   ))}
                 </div>
               </div>
+
+              {/* 開講曜日 */}
               <div className="input-group">
-                <label className="input-label">開講曜日</label>
+                <label className="input-label">{UI_LANG[lang].day}</label>
                 <div className="chip-group">
                   {options.days.map((d) => (
                     <div
@@ -1035,13 +1183,18 @@ const App = () => {
                       onClick={() =>
                         setInputState({ ...inputState, day: d.value })
                       }>
-                      {d.text === "選択してください" ? "指定なし" : d.text}
+                      {d.text.includes("選択してください") ||
+                      d.text.includes("Select")
+                        ? UI_LANG[lang].any
+                        : d.text}
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* 開講時限 */}
               <div className="input-group">
-                <label className="input-label">開講時限</label>
+                <label className="input-label">{UI_LANG[lang].time}</label>
                 <div className="chip-group">
                   {options.times.map((t) => (
                     <div
@@ -1050,8 +1203,9 @@ const App = () => {
                       onClick={() =>
                         setInputState({ ...inputState, time: t.value })
                       }>
-                      {t.text === "選択してください"
-                        ? "指定なし"
+                      {t.text.includes("選択してください") ||
+                      t.text.includes("Select")
+                        ? UI_LANG[lang].any
                         : t.text.replace("限", "")}
                     </div>
                   ))}
@@ -1059,7 +1213,7 @@ const App = () => {
               </div>
             </div>
 
-            {/* 🌟 変更：タイトルの右側に「以下の項目をリセット」を設置 */}
+            {/* 🌟 キーワード条件ヘッダー */}
             <div
               style={{
                 display: "flex",
@@ -1069,10 +1223,10 @@ const App = () => {
                 marginBottom: "24px"
               }}>
               <div className="section-title" style={{ marginBottom: 0 }}>
-                キーワード
+                {UI_LANG[lang].keywordsTitle}
               </div>
               <button className="btn-reset-text" onClick={handleResetLower}>
-                以下の項目をリセット
+                {UI_LANG[lang].resetLower}
               </button>
             </div>
 
@@ -1083,10 +1237,10 @@ const App = () => {
                 gap: "24px"
               }}>
               <div className="input-group">
-                <label className="input-label">科目名・講義題目</label>
+                <label className="input-label">{UI_LANG[lang].sbj}</label>
                 <input
                   type="text"
-                  placeholder="例：憲法"
+                  placeholder={UI_LANG[lang].sbjPlaceholder}
                   value={inputState.sbj}
                   onChange={(e) =>
                     setInputState({ ...inputState, sbj: e.target.value })
@@ -1094,10 +1248,10 @@ const App = () => {
                 />
               </div>
               <div className="input-group">
-                <label className="input-label">教員名</label>
+                <label className="input-label">{UI_LANG[lang].staff}</label>
                 <input
                   type="text"
-                  placeholder="氏名を入力"
+                  placeholder={UI_LANG[lang].staffPlaceholder}
                   value={inputState.staff}
                   onChange={(e) =>
                     setInputState({ ...inputState, staff: e.target.value })
@@ -1105,10 +1259,10 @@ const App = () => {
                 />
               </div>
               <div className="input-group" style={{ gridColumn: "span 2" }}>
-                <label className="input-label">全文検索</label>
+                <label className="input-label">{UI_LANG[lang].all}</label>
                 <input
                   type="text"
-                  placeholder="シラバス内の内容を一括検索"
+                  placeholder={UI_LANG[lang].allPlaceholder}
                   value={inputState.all}
                   onChange={(e) =>
                     setInputState({ ...inputState, all: e.target.value })
@@ -1117,15 +1271,15 @@ const App = () => {
               </div>
             </div>
 
-            {/* 🌟 順序入れ替え：ここに「詳しく検索」を配置 */}
+            {/* 🌟 詳しく検索（アコーディオン） */}
             <div className="section-title" style={{ marginTop: "40px" }}>
-              詳しく検索
+              {UI_LANG[lang].advancedTitle}
             </div>
             <div className="input-group">
               <div
                 className="accordion-header"
                 onClick={() => setShowAdvanced(!showAdvanced)}>
-                <span>実務経験・方式・その他条件</span>
+                <span>{UI_LANG[lang].advancedHeader}</span>
                 <span>{showAdvanced ? "▲" : "▼"}</span>
               </div>
               {showAdvanced && (
@@ -1137,10 +1291,12 @@ const App = () => {
                       gap: "20px"
                     }}>
                     <div className="input-group">
-                      <label className="input-label">キーワード検索</label>
+                      <label className="input-label">
+                        {UI_LANG[lang].keywordParam}
+                      </label>
                       <input
                         type="text"
-                        placeholder="補助的なキーワードを入力"
+                        placeholder={UI_LANG[lang].keywordPlaceholder}
                         value={inputState.keyword}
                         onChange={(e) =>
                           setInputState({
@@ -1152,7 +1308,7 @@ const App = () => {
                     </div>
                     <div className="input-group">
                       <label className="input-label">
-                        実務経験のある教員等による授業科目
+                        {UI_LANG[lang].experience}
                       </label>
                       <div className="chip-group">
                         <div
@@ -1160,26 +1316,28 @@ const App = () => {
                           onClick={() =>
                             setInputState({ ...inputState, experience: "1" })
                           }>
-                          該当する
+                          {UI_LANG[lang].expYes}
                         </div>
                         <div
                           className={`chip ${inputState.experience === "0" ? "active" : ""}`}
                           onClick={() =>
                             setInputState({ ...inputState, experience: "0" })
                           }>
-                          該当しない
+                          {UI_LANG[lang].expNo}
                         </div>
                         <div
                           className={`chip ${inputState.experience === "NULL" ? "active" : ""}`}
                           onClick={() =>
                             setInputState({ ...inputState, experience: "NULL" })
                           }>
-                          指定なし
+                          {UI_LANG[lang].any}
                         </div>
                       </div>
                     </div>
                     <div className="input-group">
-                      <label className="input-label">科目種別</label>
+                      <label className="input-label">
+                        {UI_LANG[lang].sort}
+                      </label>
                       <select
                         value={inputState.sort}
                         onChange={(e) =>
@@ -1193,7 +1351,9 @@ const App = () => {
                       </select>
                     </div>
                     <div className="input-group">
-                      <label className="input-label">言語コード</label>
+                      <label className="input-label">
+                        {UI_LANG[lang].langCode}
+                      </label>
                       <select
                         value={inputState.langCode}
                         onChange={(e) =>
@@ -1210,7 +1370,9 @@ const App = () => {
                       </select>
                     </div>
                     <div className="input-group">
-                      <label className="input-label">授業実施方式</label>
+                      <label className="input-label">
+                        {UI_LANG[lang].method}
+                      </label>
                       <select
                         value={inputState.method}
                         onChange={(e) =>
@@ -1231,15 +1393,15 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 順序入れ替え：最下部に「SDGs 条件」を配置 */}
+            {/* 🌟 SDGs 条件（アコーディオン） */}
             <div className="section-title" style={{ marginTop: "40px" }}>
-              SDGs 条件
+              {UI_LANG[lang].sdgsTitle}
             </div>
             <div className="input-group">
               <div
                 className="accordion-header"
                 onClick={() => setShowSdgs(!showSdgs)}>
-                <span>SDGsの項目を選択（クリックで開閉）</span>
+                <span>{UI_LANG[lang].sdgsHeader}</span>
                 <span>{showSdgs ? "▲" : "▼"}</span>
               </div>
               {showSdgs && (
@@ -1268,8 +1430,9 @@ const App = () => {
               )}
             </div>
 
+            {/* 🌟 検索ボタン */}
             <button className="btn-submit" onClick={handleFinalSearch}>
-              シラバスを検索する
+              {UI_LANG[lang].submitBtn}
             </button>
           </div>
         )}
