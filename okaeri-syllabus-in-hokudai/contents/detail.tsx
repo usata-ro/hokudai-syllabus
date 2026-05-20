@@ -79,8 +79,11 @@ export const getStyle: PlasmoGetStyle = () => {
       justify-content: center;
     }
     
-    .modern-header-bg {
-      background-color: var(--main-color);
+.modern-header-bg {
+      width: 100%;
+      background: linear-gradient(135deg, #4CAF50 0%, #1F8C32 50%, #166524 100%);
+      display: flex;
+      justify-content: center;
     }
 
     .control-bar-bg {

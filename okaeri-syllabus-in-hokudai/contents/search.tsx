@@ -88,6 +88,26 @@ export const getStyle: PlasmoGetStyle = () => {
     .header-left { display: flex; align-items: center; gap: 24px; }
     .modern-header h1 { font-family: "Gen Interface JP Display", sans-serif; font-weight: 800; margin: 0; font-size: 1.35rem; letter-spacing: 0.05em; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
+.header-sub-nav {
+      display: flex;
+      gap: 20px;
+      font-size: 0.95rem;
+    }
+
+    .header-sub-nav a {
+      color: var(--header-text);
+      text-decoration: none;
+      opacity: 0.8;
+      transition: all 0.2s ease;
+      font-weight: bold;
+    }
+
+    .header-sub-nav a:hover {
+      opacity: 1;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
     .lang-toggle { display: inline-flex; background-color: rgba(255, 255, 255, 0.2); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.4); }
     .lang-btn { background: transparent; border: none; color: white; padding: 6px 14px; font-family: inherit; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; }
     .lang-btn.active { background-color: white; color: var(--main-color); }
@@ -1005,17 +1025,10 @@ const App = () => {
                 </button>
               </div>
             </div>
-            <nav style={{ display: "flex", gap: "15px" }}>
-              <a
-                href="/Portal/Public/Syllabus/SearchMain.aspx"
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                  fontSize: "1rem"
-                }}>
-                検索トップ
-              </a>
+            <nav className="header-sub-nav">
+              <a href="/Portal/Public/Syllabus/SearchMain.aspx">シラバス検索</a>
+              <a href="/Portal/Public/Num/NumSearch.aspx">ナンバリング検索</a>
+              <a href="/Portal/Public/Cur/CurSearch.aspx">実行教育課程検索</a>
             </nav>
           </header>
         </div>
