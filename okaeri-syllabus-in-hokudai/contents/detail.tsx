@@ -1,16 +1,15 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useState } from "react"
 
+import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
-// 1. 動作対象のURL設定
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gakumu.academic.hokudai.ac.jp/Portal/Public/Syllabus/DetailMain.aspx*"
   ]
 }
 
-// 2. スタイルとフォントの注入
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
   style.textContent = `
@@ -29,7 +28,6 @@ export const getStyle: PlasmoGetStyle = () => {
       --inazo-color: #006085;
     }
 
-    /* ダークモードへの対応 */
     @media (prefers-color-scheme: dark) {
       :host {
         --text-color: #e6f2ec;
@@ -43,7 +41,6 @@ export const getStyle: PlasmoGetStyle = () => {
       }
     }
 
-    /* 💡 メインラッパー（全画面を覆い、Flexboxで中央寄せするアプローチ） */
     .modern-wrapper {
       min-width: 100vw;
       min-height: 100vh;
@@ -57,7 +54,6 @@ export const getStyle: PlasmoGetStyle = () => {
       align-items: center; 
     }
 
-    /* 上部固定エリア（全幅を維持） */
     .sticky-header-container {
       position: sticky;
       top: 0;
@@ -71,7 +67,6 @@ export const getStyle: PlasmoGetStyle = () => {
       align-items: center; 
     }
 
-    /* ヘッダーとコントロールバーの背景を確実に全幅かつ最低1100pxにする */
     .modern-header-bg, .control-bar-bg {
       width: 100%;
       min-width: 1100px;
@@ -79,7 +74,7 @@ export const getStyle: PlasmoGetStyle = () => {
       justify-content: center;
     }
     
-.modern-header-bg {
+    .modern-header-bg {
       width: 100%;
       background: linear-gradient(135deg, #4CAF50 0%, #1F8C32 50%, #166524 100%);
       display: flex;
@@ -91,7 +86,6 @@ export const getStyle: PlasmoGetStyle = () => {
       border-bottom: 1px solid var(--border-color);
     }
     
-    /* ヘッダーの中身（横幅固定1100px） */
     .modern-header {
       width: 1100px;
       color: var(--header-text);
@@ -165,7 +159,6 @@ export const getStyle: PlasmoGetStyle = () => {
       text-underline-offset: 4px;
     }
 
-    /* コントロールバーの中身（横幅固定1100px） */
     .control-bar {
       width: 1100px;
       padding: 16px 32px;
@@ -244,14 +237,13 @@ export const getStyle: PlasmoGetStyle = () => {
       transform: translateY(-1px);
     }
 
-    /* メインコンテンツ（横幅固定1100px） */
+    /* メインコンテンツ */
     .main-content {
       width: 1100px;
       padding: 40px 32px;
       box-sizing: border-box;
     }
 
-    /* カード型・2列グリッドレイアウト */
     .syllabus-card {
       background-color: var(--border-color);
       border-radius: 8px;
@@ -309,7 +301,6 @@ export const getStyle: PlasmoGetStyle = () => {
       box-sizing: border-box;
     }
 
-    /* コンパクト版の表（前半の基本情報用） */
     .syllabus-grid.compact .syllabus-item-label,
     .syllabus-grid.compact .syllabus-item-value {
       padding: 10px 16px;
@@ -317,7 +308,6 @@ export const getStyle: PlasmoGetStyle = () => {
       line-height: 1.6;
     }
 
-    /* テキスト内URLのリンクデザイン */
     .auto-link {
       color: var(--inazo-color);
       text-decoration: none;
@@ -325,6 +315,32 @@ export const getStyle: PlasmoGetStyle = () => {
     }
     .auto-link:hover {
       text-decoration: underline;
+    }
+
+    /* 検索結果から復元した曜日時限用のスタイル */
+    .extension-info-bar {
+      background: linear-gradient(90deg, rgba(31, 140, 50, 0.08) 0%, rgba(0, 96, 133, 0.03) 100%);
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.05rem;
+    }
+    .extension-badge {
+      background-color: var(--main-color);
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .extension-time-val {
+      font-weight: 800;
+      color: var(--text-color);
     }
 
     /* ブラウザの印刷機能対応 */
@@ -360,7 +376,6 @@ export const getStyle: PlasmoGetStyle = () => {
   return style
 }
 
-// 3. データ抽出定義
 type TargetData = {
   id: string
   fallbackIds?: string[]
@@ -418,6 +433,7 @@ const targetDataList: TargetData[] = [
     en: "Term",
     fullWidth: false
   },
+
   {
     id: "ctl00_phContents_ucSummary_txtlct_cd_lbl",
     ja: "時間割番号",
@@ -679,8 +695,25 @@ const SyllabusModernUI = () => {
   const [isDetailActive] = useStorage("isDetailActive", true)
   const [tableData, setTableData] = useState<TableRow[]>([])
   const [lang, setLang] = useState<"ja" | "en">("ja")
+  // 🌟 修正：不具合の起きやすい useStorage フックを削除し、確実な useState を用意
+  const [timeData, setTimeData] = useState<any>(null)
 
   useEffect(() => {
+    // 🌟 修正：URLとHTML画面の両方から時間割番号を探し、直接ストレージを読み込む
+    const lctCdEl = document.getElementById(
+      "ctl00_phContents_ucSummary_txtlct_cd_lbl"
+    )
+    const urlCd = new URLSearchParams(window.location.search).get("lct_cd")
+    const lctCd = urlCd || (lctCdEl ? lctCdEl.textContent?.trim() : "")
+
+    if (lctCd) {
+      const storage = new Storage({ area: "local" })
+      storage.get("timetable_cache").then((cache: any) => {
+        if (cache && cache[lctCd]) {
+          setTimeData(cache[lctCd]) // 成功したら画面を再描画！
+        }
+      })
+    }
     const oldForm = document.getElementById("aspnetForm")
 
     // 💡 ストレージが読み込み中（undefined）の場合は何もしない
@@ -746,7 +779,7 @@ const SyllabusModernUI = () => {
   const subjectQuery = encodeURIComponent(subjectNameRow?.valueJa || "")
 
   const teacherRow = tableData.find(
-    (r) => r.id === "ctl00_phContents_ucSummary_txtstaff_name_lbl"
+    (r) => r.id === "ctl00_phContents_ucSummary_txtadmin_staff_alias_double_lbl"
   )
   let teacherName = teacherRow?.valueJa || ""
   if (teacherName.includes("(")) teacherName = teacherName.split("(")[0]
@@ -765,7 +798,7 @@ const SyllabusModernUI = () => {
         <div className="modern-header-bg">
           <header className="modern-header">
             <div className="header-left">
-              <h1>北海道大学シラバス検索システム</h1>
+              <h1>北海道大学シラバス検索システム </h1>
               <div className="lang-toggle">
                 <button
                   className={`lang-btn ${lang === "ja" ? "active" : ""}`}
@@ -818,6 +851,25 @@ const SyllabusModernUI = () => {
         </div>
       </div>
       <main className="main-content">
+        {/* 🌟 修正：バッジの文言を変更し、実際の科目名を動的に埋め込む */}
+        {timeData && (
+          <div className="extension-info-bar">
+            <span className="extension-badge">
+              {lang === "ja" ? "検索結果から表示" : "From Search Results"}
+            </span>
+            <span>
+              {lang === "ja"
+                ? `${subjectNameRow?.valueJa || "この科目"}の開講曜日・時限：`
+                : `Day / Period for ${subjectNameRow?.valueEn || "this course"}:`}
+            </span>
+            <span
+              className="extension-time-val"
+              style={{ whiteSpace: "pre-wrap" }}>
+              {timeData[lang]}
+            </span>
+          </div>
+        )}
+
         <div className="syllabus-card" style={{ marginBottom: "40px" }}>
           <div className="syllabus-grid compact">
             {table1.map((row, index) => (

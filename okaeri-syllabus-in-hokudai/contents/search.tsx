@@ -1,22 +1,8 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useMemo, useState } from "react"
 
+import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
-
-/**
- * 💡 開発者向けの修正メモ:
- * 1. セキュリティ (CSP) 対策:
- * javascript: プロトコル経由の実行を完全に排除しました。
- * ASP.NET の隠しフィールド (__EVENTTARGET 等) を直接書き換え、form.submit() を実行する
- * ネイティブな方式に統一することで、Chrome の CSP 制限を安全に回避します。
- * 2. レイアウト最適化:
- * - 科目名の幅を 180px に縮小。
- * - iNAZO列を広げることで右側の余白を吸収し、全体 1100px に固定。
- * 3. ページネーション:
- * 元画面のリンクから引数を解析し、直接ポストバックをエミュレートします。
- */
-
-// 💡 プレビュー環境用モック（実際の Plasmo 環境では import { useStorage } from "@plasmohq/storage/hook" を使用）
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -774,7 +760,18 @@ const App = () => {
       }
     })
     setResults(data)
-
+    // 🌟 追加：時間割番号（lct_cd）をキーにした曜日時限のキャッシュを作成して保存
+    const storage = new Storage({ area: "local" })
+    storage.get("timetable_cache").then((oldCache: any) => {
+      const newCache = { ...(oldCache || {}) }
+      data.forEach((item) => {
+        const match = item.links.jp?.match(/lct_cd=([^&]+)/)
+        if (match && match[1]) {
+          newCache[match[1]] = item.time // { ja: "...", en: "..." } を保存
+        }
+      })
+      storage.set("timetable_cache", newCache)
+    })
     const pagerRow = allRows.find((row) =>
       row.querySelector("td[colspan] table")
     )
