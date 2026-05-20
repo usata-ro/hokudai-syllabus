@@ -232,6 +232,39 @@ export const getStyle: PlasmoGetStyle = () => {
     
     .btn-back-link { background: white; border: 1.5px solid #ccc; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: bold; color: #666; font-size: 1rem; transition: background 0.2s; }
     .btn-back-link:hover { background: #f9f9f9; }
+
+
+/* 🌟 エラーと必須バッジ用のCSS */
+    .required-badge {
+      background-color: #e53935;
+      color: white;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      font-weight: bold;
+    }
+    .error-text {
+      color: #e53935;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    .has-error .chip {
+      border-color: #ffcdd2;
+      background-color: #fff8f8;
+      color: #d32f2f;
+    }
+    .has-error select {
+      border-color: #e53935;
+      background-color: #fff8f8;
+    }
+    .has-error .faculty-container {
+      border-color: #e53935;
+      background-color: #fff8f8;
+    }
+
   `
   return style
 }
@@ -298,6 +331,13 @@ const App = () => {
     langCode: "NULL",
     method: "NULL",
     sdgs: []
+  })
+
+  // 🌟 エラー状態の管理を追加
+  const [errors, setErrors] = useState({
+    year: false,
+    org: false,
+    faculty: false
   })
 
   const [results, setResults] = useState([])
@@ -403,13 +443,11 @@ const App = () => {
     }))
   }
 
-  // 💡 分類廃止、一括表示
   const groupedFaculties = useMemo(() => {
     const items = options.faculties.filter((f) => f.value !== "NULL")
     return [{ label: "学部・研究科を選択", items }]
   }, [options.faculties])
 
-  // 💡 【修正】課程区分変更（動的ポストバックのエミュレート）
   const handleOrgChange = (val: string) => {
     const isLawSchool = val === "05"
     setInputState((prev) => ({
@@ -417,6 +455,7 @@ const App = () => {
       org: val,
       faculty: isLawSchool ? "15" : "NULL"
     }))
+    if (errors.org) setErrors((prev) => ({ ...prev, org: false }))
 
     const form = document.getElementById("aspnetForm") as HTMLFormElement
     const eventTarget = document.getElementById(
@@ -435,6 +474,7 @@ const App = () => {
   //ここに handleYearChange を追加する
   const handleYearChange = (val: string) => {
     setInputState((prev) => ({ ...prev, year: val }))
+    if (errors.year) setErrors((prev) => ({ ...prev, year: false }))
 
     const form = document.getElementById("aspnetForm") as HTMLFormElement
     const eventTarget = document.getElementById(
@@ -540,12 +580,30 @@ const App = () => {
   }
 
   const handleFinalSearch = () => {
+    const newErrors = {
+      year: !inputState.year,
+      org: inputState.org === "NULL",
+      faculty: inputState.faculty === "NULL"
+    }
+
+    if (newErrors.year || newErrors.org || newErrors.faculty) {
+      setErrors(newErrors)
+      // 一番上（エラーがある場所）に少しスクロールしてあげる
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return // ここで送信をストップ
+    }
+
+    // エラーがなければクリアして進む
+    setErrors({ year: false, org: false, faculty: false })
+
+    // ▼ これ以降は元のコード（値の同期処理）
     const sync = (id: string, val: string) => {
       const el = document.getElementById(id) as
         | HTMLSelectElement
         | HTMLInputElement
       if (el) el.value = val
     }
+
     sync("ctl00_phContents_ddl_year", inputState.year)
     sync("ctl00_phContents_ddl_org", inputState.org)
     sync("ctl00_phContents_ddl_fac", inputState.faculty)
@@ -681,8 +739,10 @@ const App = () => {
         {view === "search" && (
           <div className="form-card">
             <div className="section-title">基本条件</div>
-            <div className="input-group">
-              <label className="input-label">開講年度</label>
+            <div className={`input-group ${errors.year ? "has-error" : ""}`}>
+              <label className="input-label">
+                開講年度 <span className="required-badge">必須</span>
+              </label>
               <div className="chip-group">
                 {options.years.slice(0, 3).map((y) => (
                   <div
@@ -712,9 +772,14 @@ const App = () => {
                   ))}
                 </select>
               </div>
+              {errors.year && (
+                <div className="error-text">開講年度を選択してください。</div>
+              )}
             </div>
-            <div className="input-group">
-              <label className="input-label">課程区分</label>
+            <div className={`input-group ${errors.org ? "has-error" : ""}`}>
+              <label className="input-label">
+                課程区分 <span className="required-badge">必須</span>
+              </label>
               <div className="chip-group">
                 {options.orgs.map((o) => (
                   <div
@@ -725,9 +790,14 @@ const App = () => {
                   </div>
                 ))}
               </div>
+              {errors.org && (
+                <div className="error-text">課程区分を選択してください。</div>
+              )}
             </div>
-            <div className="input-group">
-              <label className="input-label">開講学部・研究科</label>
+            <div className={`input-group ${errors.faculty ? "has-error" : ""}`}>
+              <label className="input-label">
+                開講学部・研究科 <span className="required-badge">必須</span>
+              </label>
               <div className="faculty-container">
                 {groupedFaculties.map((group) => (
                   <div key={group.label} className="faculty-group">
@@ -737,9 +807,11 @@ const App = () => {
                         <div
                           key={f.value}
                           className={`chip ${inputState.faculty === f.value ? "active" : ""}`}
-                          onClick={() =>
+                          onClick={() => {
                             setInputState({ ...inputState, faculty: f.value })
-                          }>
+                            if (errors.faculty)
+                              setErrors((prev) => ({ ...prev, faculty: false })) // 🌟 エラー解除
+                          }}>
                           {f.text}
                         </div>
                       ))}
@@ -747,6 +819,11 @@ const App = () => {
                   </div>
                 ))}
               </div>
+              {errors.faculty && (
+                <div className="error-text">
+                  開講学部・研究科を選択してください。
+                </div>
+              )}
             </div>
             <div className="section-title" style={{ marginTop: "40px" }}>
               時間割条件
