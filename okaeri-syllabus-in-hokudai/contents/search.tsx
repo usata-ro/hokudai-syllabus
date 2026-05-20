@@ -264,7 +264,47 @@ export const getStyle: PlasmoGetStyle = () => {
       border-color: #e53935;
       background-color: #fff8f8;
     }
-
+/* 🌟 リセットボタンのスタイル */
+    .btn-reset { 
+      background: transparent; 
+      color: #666; 
+      border: 1.5px solid #ccc; 
+      padding: 16px 40px; 
+      font-size: 1rem; 
+      font-weight: bold; 
+      border-radius: 50px; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+    }
+    .btn-reset:hover { 
+      background: #f0f0f0; 
+      color: #333; 
+      border-color: #aaa;
+    }
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 40px;
+    }
+      /* 🌟 新しいリセットボタンのスタイル */
+    .btn-reset-text {
+      background: #fff;
+      color: #666;
+      border: 1.5px solid #d1e6d5;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset-text:hover {
+      background: #fff8f8;
+      color: #e53935;
+      border-color: #ffcdd2;
+    }
   `
   return style
 }
@@ -474,25 +514,6 @@ const App = () => {
       form.submit() // CSPエラーにならないネイティブ送信
     }
   }
-  //ここに handleYearChange を追加する
-  const handleYearChange = (val: string) => {
-    setInputState((prev) => ({ ...prev, year: val }))
-    if (errors.year) setErrors((prev) => ({ ...prev, year: false }))
-
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const ddlYear = document.getElementById(
-      "ctl00_phContents_ddl_year"
-    ) as HTMLSelectElement
-
-    if (form && eventTarget && ddlYear) {
-      ddlYear.value = val
-      eventTarget.value = "ctl00$phContents$ddl_year"
-      form.submit() // CSPエラーにならないネイティブ送信
-    }
-  }
 
   const scrapeExhaustiveConditions = () => {
     const mapping = [
@@ -582,24 +603,95 @@ const App = () => {
     }
   }
 
+  // =================================================================
+  // 🌟 1. すべての条件をリセットする関数（開講年度は最新、それ以外は初期化）
+  // =================================================================
+  const handleResetAll = () => {
+    const defaultYear = options.years[0]?.value || "2026"
+    setInputState({
+      year: defaultYear,
+      org: "NULL",
+      faculty: "NULL",
+      grad: "NULL",
+      term: "NULL",
+      day: "-1",
+      time: "NULL",
+      sort: "NULL",
+      sbj: "",
+      staff: "",
+      keyword: "",
+      all: "",
+      experience: "NULL",
+      langCode: "NULL",
+      method: "NULL",
+      sdgs: []
+    })
+    // エラー表示もまとめて綺麗に消す
+    setErrors({ year: false, org: false, faculty: false })
+  }
+
+  // =================================================================
+  // 🌟 2. 後半の条件のみをリセットする関数（キーワード、詳しく検索、SDGsを初期化）
+  // =================================================================
+  const handleResetLower = () => {
+    setInputState((prev) => ({
+      ...prev, // 基本条件と時間割条件（年度、課程、学部、年次、学期、曜日、時限）はそのまま残す
+      sort: "NULL",
+      sbj: "",
+      staff: "",
+      keyword: "",
+      all: "",
+      experience: "NULL",
+      langCode: "NULL",
+      method: "NULL",
+      sdgs: []
+    }))
+  }
+
+  // =================================================================
+  // 🌟 3. 開講年度がチップまたはセレクトボックスで変更されたときの処理
+  // =================================================================
+  const handleYearChange = (val: string) => {
+    setInputState((prev) => ({ ...prev, year: val }))
+    if (errors.year) setErrors((prev) => ({ ...prev, year: false }))
+
+    const form = document.getElementById("aspnetForm") as HTMLFormElement
+    const eventTarget = document.getElementById(
+      "__EVENTTARGET"
+    ) as HTMLInputElement
+    const ddlYear = document.getElementById(
+      "ctl00_phContents_ddl_year"
+    ) as HTMLSelectElement
+
+    if (form && eventTarget && ddlYear) {
+      ddlYear.value = val
+      eventTarget.value = "ctl00$phContents$ddl_year"
+      form.submit() // ASP.NETのポストバックを安全にエミュレート
+    }
+  }
+
+  // =================================================================
+  // 🌟 4. 【手順3の完成形】シラバス検索ボタンが押されたときのバリデーション＆同期送信
+  // =================================================================
   const handleFinalSearch = () => {
+    // ① 未入力がないか必須項目をチェック
     const newErrors = {
       year: !inputState.year,
       org: inputState.org === "NULL",
       faculty: inputState.faculty === "NULL"
     }
 
+    // ② どこか1つでもエラーがあれば処理を止めて上部にスクロール
     if (newErrors.year || newErrors.org || newErrors.faculty) {
       setErrors(newErrors)
-      // 一番上（エラーがある場所）に少しスクロールしてあげる
       window.scrollTo({ top: 0, behavior: "smooth" })
-      return // ここで送信をストップ
+      return
     }
 
-    // エラーがなければクリアして進む
+    // ③ エラーがなければ状態をクリアして同期処理へ進む
     setErrors({ year: false, org: false, faculty: false })
 
-    // ▼ これ以降は元のコード（値の同期処理）
+    // 元画面の要素へ値を同期するヘルパー
     const sync = (id: string, val: string) => {
       const el = document.getElementById(id) as
         | HTMLSelectElement
@@ -607,6 +699,7 @@ const App = () => {
       if (el) el.value = val
     }
 
+    // 各入力値を学務システム本来のフォーム要素へ同期
     sync("ctl00_phContents_ddl_year", inputState.year)
     sync("ctl00_phContents_ddl_org", inputState.org)
     sync("ctl00_phContents_ddl_fac", inputState.faculty)
@@ -623,6 +716,7 @@ const App = () => {
     sync("ctl00_phContents_ddl_lang", inputState.langCode)
     sync("ctl00_phContents_ddl_lct_do_type", inputState.method)
 
+    // SDGsのチェックボックス要素を同期
     const allSdgsCbs = document.querySelectorAll(
       'input[type="checkbox"][name*="cblSDGs"]'
     )
@@ -634,14 +728,14 @@ const App = () => {
       if (target) target.checked = true
     })
 
-    // 💡 本物のボタンを叩く
+    // 💡 学務システム本来の「検索」ボタンをプログラムでクリック
     const btn = document.getElementById(
       "ctl00_phContents_ctl16_btnSearch"
     ) as HTMLElement
     if (btn) btn.click()
   }
 
-  // 💡 【修正】戻るボタンのCSPエラー対策（ネイティブForm送信方式）
+  // 💡 【修正】戻るボタンのCSPエラー対策
   const handleBackToSearch = () => {
     const form = document.getElementById("aspnetForm") as HTMLFormElement
     const eventTarget = document.getElementById(
@@ -656,7 +750,7 @@ const App = () => {
     }
   }
 
-  // 💡 【修正】ページネーションのCSPエラー対策（ネイティブForm送信方式）
+  // 💡 【修正】ページネーションのCSPエラー対策
   const handlePageClick = (pageText: string) => {
     const pagerTable = document.querySelector(
       "#ctl00_phContents_ucGrid_grv tr td[colspan] table"
@@ -685,7 +779,6 @@ const App = () => {
           return
         }
       }
-      // フォールバック
       eventTarget.value = "ctl00$phContents$ucGrid$grv"
       eventArgument.value = `Page$${pageText}`
       form.submit()
@@ -741,7 +834,22 @@ const App = () => {
       <main className="container">
         {view === "search" && (
           <div className="form-card">
-            <div className="section-title">基本条件</div>
+            {/* 🌟 変更：タイトルの右側に「すべての条件をリセット」を設置 */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px"
+              }}>
+              <div className="section-title" style={{ marginBottom: 0 }}>
+                基本条件
+              </div>
+              <button className="btn-reset-text" onClick={handleResetAll}>
+                すべての条件をリセット
+              </button>
+            </div>
+
             <div className={`input-group ${errors.year ? "has-error" : ""}`}>
               <label className="input-label">
                 開講年度 <span className="required-badge">必須</span>
@@ -779,6 +887,7 @@ const App = () => {
                 <div className="error-text">開講年度を選択してください。</div>
               )}
             </div>
+
             <div className={`input-group ${errors.org ? "has-error" : ""}`}>
               <label className="input-label">
                 課程区分 <span className="required-badge">必須</span>
@@ -797,6 +906,7 @@ const App = () => {
                 <div className="error-text">課程区分を選択してください。</div>
               )}
             </div>
+
             <div className={`input-group ${errors.faculty ? "has-error" : ""}`}>
               <label className="input-label">
                 開講学部・研究科 <span className="required-badge">必須</span>
@@ -813,7 +923,7 @@ const App = () => {
                           onClick={() => {
                             setInputState({ ...inputState, faculty: f.value })
                             if (errors.faculty)
-                              setErrors((prev) => ({ ...prev, faculty: false })) // 🌟 エラー解除
+                              setErrors((prev) => ({ ...prev, faculty: false }))
                           }}>
                           {f.text}
                         </div>
@@ -828,6 +938,7 @@ const App = () => {
                 </div>
               )}
             </div>
+
             <div className="section-title" style={{ marginTop: "40px" }}>
               時間割条件
             </div>
@@ -903,9 +1014,23 @@ const App = () => {
               </div>
             </div>
 
-            <div className="section-title" style={{ marginTop: "40px" }}>
-              キーワード
+            {/* 🌟 変更：タイトルの右側に「以下の項目をリセット」を設置 */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "40px",
+                marginBottom: "24px"
+              }}>
+              <div className="section-title" style={{ marginBottom: 0 }}>
+                キーワード
+              </div>
+              <button className="btn-reset-text" onClick={handleResetLower}>
+                以下の項目をリセット
+              </button>
             </div>
+
             <div
               style={{
                 display: "grid",
@@ -947,42 +1072,7 @@ const App = () => {
               </div>
             </div>
 
-            <div className="section-title" style={{ marginTop: "40px" }}>
-              SDGs 条件
-            </div>
-            <div className="input-group">
-              <div
-                className="accordion-header"
-                onClick={() => setShowSdgs(!showSdgs)}>
-                <span>SDGsの項目を選択（クリックで開閉）</span>
-                <span>{showSdgs ? "▲" : "▼"}</span>
-              </div>
-              {showSdgs && (
-                <div className="accordion-content">
-                  <div className="sdgs-list">
-                    {SDGS_LABELS.map((label, i) => (
-                      <label key={i + 1} className="sdgs-item">
-                        <input
-                          type="checkbox"
-                          checked={inputState.sdgs.includes((i + 1).toString())}
-                          onChange={(e) => {
-                            const val = (i + 1).toString()
-                            setInputState((prev) => ({
-                              ...prev,
-                              sdgs: e.target.checked
-                                ? [...prev.sdgs, val]
-                                : prev.sdgs.filter((s) => s !== val)
-                            }))
-                          }}
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
+            {/* 🌟 順序入れ替え：ここに「詳しく検索」を配置 */}
             <div className="section-title" style={{ marginTop: "40px" }}>
               詳しく検索
             </div>
@@ -1002,9 +1092,7 @@ const App = () => {
                       gap: "20px"
                     }}>
                     <div className="input-group">
-                      <label className="input-label">
-                        キーワード検索 (txt_keyword_Search)
-                      </label>
+                      <label className="input-label">キーワード検索</label>
                       <input
                         type="text"
                         placeholder="補助的なキーワードを入力"
@@ -1098,12 +1186,48 @@ const App = () => {
               )}
             </div>
 
+            {/* 🌟 順序入れ替え：最下部に「SDGs 条件」を配置 */}
+            <div className="section-title" style={{ marginTop: "40px" }}>
+              SDGs 条件
+            </div>
+            <div className="input-group">
+              <div
+                className="accordion-header"
+                onClick={() => setShowSdgs(!showSdgs)}>
+                <span>SDGsの項目を選択（クリックで開閉）</span>
+                <span>{showSdgs ? "▲" : "▼"}</span>
+              </div>
+              {showSdgs && (
+                <div className="accordion-content">
+                  <div className="sdgs-list">
+                    {SDGS_LABELS.map((label, i) => (
+                      <label key={i + 1} className="sdgs-item">
+                        <input
+                          type="checkbox"
+                          checked={inputState.sdgs.includes((i + 1).toString())}
+                          onChange={(e) => {
+                            const val = (i + 1).toString()
+                            setInputState((prev) => ({
+                              ...prev,
+                              sdgs: e.target.checked
+                                ? [...prev.sdgs, val]
+                                : prev.sdgs.filter((s) => s !== val)
+                            }))
+                          }}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button className="btn-submit" onClick={handleFinalSearch}>
               シラバスを検索する
             </button>
           </div>
         )}
-
         {view === "list" && (
           <div>
             <div
