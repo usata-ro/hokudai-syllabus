@@ -122,9 +122,49 @@ export const getStyle: PlasmoGetStyle = () => {
     .faculty-group { display: flex; flex-direction: column; gap: 8px; }
     .faculty-group-label { font-size: 0.85rem; font-weight: 800; color: #666; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
-    select, input[type="text"] { width: 100%; padding: 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-family: inherit; font-size: 1.05rem; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
-    select:focus, input[type="text"]:focus { border-color: var(--main-color); }
+/* テキスト入力とセレクトボックスの共通スタイル */
+    select, input[type="text"] { 
+      width: 100%; 
+      padding: 14px; 
+      border: 1.5px solid var(--border-color); 
+      border-radius: 10px; 
+      font-family: inherit; 
+      font-size: 1.05rem; 
+      outline: none; 
+      box-sizing: border-box; 
+      transition: all 0.2s ease;
+      background-color: #fff;
+    }
+    
+    select:focus, input[type="text"]:focus { 
+      border-color: var(--main-color); 
+      box-shadow: 0 0 0 3px rgba(31, 140, 50, 0.15);
+    }
 
+/* セレクトボックス*/
+    select::-ms-expand {
+      display: none !important;
+    }
+
+    select {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      cursor: pointer;
+      /* backgroundのショートハンドを使わず、1つずつ!importantで指定する */
+      background-color: #fff !important;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjMUY4QzMyJyBzdHJva2Utd2lkdGg9JzIuNScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJz48cG9seWxpbmUgcG9pbnRzPSc2IDkgMTIgMTUgMTggOScvPjwvc3ZnPg==") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 14px center !important;
+      background-size: 16px !important;
+      padding-right: 40px !important;
+    }
+    
+    /* マウスホバー時に背景と枠線を少し優しく変化させる */
+    select:hover {
+      background-color: #f9fdfa;
+      border-color: var(--accent-color);
+    }
     .btn-submit { background: var(--main-color); color: white; border: none; padding: 20px 100px; font-size: 1.25rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 20px rgba(31, 140, 50, 0.25); display: block; margin: 40px auto 0; }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(31, 140, 50, 0.35); filter: brightness(1.1); }
 
@@ -662,7 +702,9 @@ const App = () => {
                       : ""
                   }
                   onChange={(e) => handleYearChange(e.target.value)}>
-                  <option value="">過去の年度を選択...</option>
+                  <option value="" disabled hidden>
+                    過去の年度を選択...
+                  </option>
                   {options.years.slice(3).map((y) => (
                     <option key={y.value} value={y.value}>
                       {y.text}
