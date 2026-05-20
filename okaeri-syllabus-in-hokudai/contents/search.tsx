@@ -559,15 +559,33 @@ const App = () => {
     )
     const data = resultRows.map((row) => {
       const cells = row.querySelectorAll("td")
+      // 🌟 修正：漢字・ひらがな・カタカナを判別して複数教員を正しくカンマ区切りで抽出する
       const splitLang = (cell: HTMLTableCellElement) => {
         const text = cell.innerHTML.replace(/<br\s*\/?>/gi, "\n")
         const tempDiv = document.createElement("div")
         tempDiv.innerHTML = text
-        const parts = (tempDiv.textContent || "")
+        const lines = (tempDiv.textContent || "")
           .split("\n")
           .map((p) => p.trim())
           .filter((p) => p !== "")
-        return { ja: parts[0] || "", en: parts[1] || parts[0] || "" }
+
+        const jaLines: string[] = []
+        const enLines: string[] = []
+
+        lines.forEach((line) => {
+          // 漢字・ひらがな・カタカナが含まれている場合は日本語の行と判定
+          if (/[\u3040-\u30FF\u4E00-\u9FFF]/.test(line)) {
+            jaLines.push(line)
+          } else {
+            enLines.push(line)
+          }
+        })
+
+        return {
+          // 🌟 変更: ", " ではなく "\n" で繋ぐ
+          ja: jaLines.join("\n") || "",
+          en: enLines.length > 0 ? enLines.join("\n") : jaLines.join("\n") || ""
+        }
       }
       const jpLink = cells[3].querySelector(".jp")?.getAttribute("href")
       let enLink = cells[3].querySelector(".en")?.getAttribute("href")
@@ -1298,12 +1316,14 @@ const App = () => {
                       {item.title.ja}
                     </td>
                     <td>
-                      <span style={{ fontSize: "0.9rem" }}>
+                      <span
+                        style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
                         {item.teacher.ja}
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: "0.85rem" }}>
+                      <span
+                        style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
                         {item.time.ja}
                       </span>
                     </td>
