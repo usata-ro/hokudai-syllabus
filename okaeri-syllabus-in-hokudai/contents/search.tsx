@@ -1551,7 +1551,8 @@ const App = () => {
                       <div style={{ display: "flex", gap: "4px" }}>
                         {item.links.jp && (
                           <a
-                            href={item.links.jp}
+                            // 🌟 修正：リンク先に ?lang=ja を付与
+                            href={item.links.jp + "&lang=ja"}
                             target="_blank"
                             className="btn-action btn-jp">
                             {UI_LANG[lang].btnJp}
@@ -1559,7 +1560,8 @@ const App = () => {
                         )}
                         {item.links.en && (
                           <a
-                            href={item.links.en}
+                            // 🌟 修正：リンク先に ?lang=en を付与
+                            href={item.links.en + "&lang=en"}
                             target="_blank"
                             className="btn-action btn-en">
                             {UI_LANG[lang].btnEn}

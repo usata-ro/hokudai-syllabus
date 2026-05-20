@@ -703,9 +703,13 @@ const SyllabusModernUI = () => {
     const lctCdEl = document.getElementById(
       "ctl00_phContents_ucSummary_txtlct_cd_lbl"
     )
+    const params = new URLSearchParams(window.location.search)
     const urlCd = new URLSearchParams(window.location.search).get("lct_cd")
     const lctCd = urlCd || (lctCdEl ? lctCdEl.textContent?.trim() : "")
-
+    const langParam = params.get("lang")
+    if (langParam === "ja" || langParam === "en") {
+      setLang(langParam)
+    }
     if (lctCd) {
       const storage = new Storage({ area: "local" })
       storage.get("timetable_cache").then((cache: any) => {
