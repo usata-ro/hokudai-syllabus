@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { DOM } from "~lib/domAdapter" // アダプターをインポート
+
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gakumu.academic.hokudai.ac.jp/Portal/Public/Syllabus/DetailMain.aspx*"
@@ -700,11 +702,9 @@ const SyllabusModernUI = () => {
 
   useEffect(() => {
     // 🌟 修正：URLとHTML画面の両方から時間割番号を探し、直接ストレージを読み込む
-    const lctCdEl = document.getElementById(
-      "ctl00_phContents_ucSummary_txtlct_cd_lbl"
-    )
+    const lctCdEl = DOM.detail.getLctCd()
     const params = new URLSearchParams(window.location.search)
-    const urlCd = new URLSearchParams(window.location.search).get("lct_cd")
+    const urlCd = params.get("lct_cd")
     const lctCd = urlCd || (lctCdEl ? lctCdEl.textContent?.trim() : "")
     const langParam = params.get("lang")
     if (langParam === "ja" || langParam === "en") {
@@ -738,11 +738,16 @@ const SyllabusModernUI = () => {
     document.body.style.backgroundColor = "#ffffff"
 
     const extracted = targetDataList.map((item) => {
-      let text = extractTextWithLinks(document.getElementById(item.id))
+      // item.id は "ctl00_phContents_..." で始まっていますが、
+      // 変換ロジックを DOM.detail.getElement に統合します
+      let text = extractTextWithLinks(
+        DOM.detail.getElement(item.id.replace("ctl00_phContents_", ""))
+      )
+
       if (item.fallbackIds) {
         item.fallbackIds.forEach((fid) => {
           const fallbackText = extractTextWithLinks(
-            document.getElementById(fid)
+            DOM.detail.getElement(fid.replace("ctl00_phContents_", ""))
           )
           if (fallbackText) text += (text ? "\n\n" : "") + fallbackText
         })

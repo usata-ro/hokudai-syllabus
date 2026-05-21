@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { DOM } from "~lib/domAdapter"
+
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gakumu.academic.hokudai.ac.jp/Portal/Public/Syllabus/SearchMain.aspx*"
@@ -530,115 +532,93 @@ const App = () => {
   const [currentConditions, setCurrentConditions] = useState([])
 
   useEffect(() => {
-    const pnlSearch = document.getElementById("ctl00_phContents_pnlSearch")
-    const pnlList = document.getElementById("ctl00_phContents_pnlList")
-    const form = document.getElementById("aspnetForm")
+    const pnlSearch = DOM.search.pnlSearch()
+    const pnlList = DOM.search.pnlList()
+    const form = DOM.form()
+
+    if (pnlSearch) {
+      setView("search")
+      if (form) form.style.display = "none"
+      const engBtn = DOM.search.getEngBtn()
+      setLang(engBtn?.getAttribute("disabled") === "disabled" ? "en" : "ja")
+      scrapeAllOptions()
+    } else if (pnlList) {
+      setView("list")
+      if (form) form.style.display = "none"
+    } else {
+      setView("original")
+      if (form) form.style.display = "block"
+    }
 
     const handleDisplay = () => {
-      if (isSearchActive === undefined || isSearchListActive === undefined)
-        return
+      const isSearchActive = true // 必要に応じてstorageから取得
+      const isSearchListActive = true
 
-      const isCurrentSearch = pnlSearch && isSearchActive
-      const isCurrentList = pnlList && isSearchListActive
+      const pnlSearch = DOM.search.pnlSearch()
+      const pnlList = DOM.search.pnlList()
+      const form = DOM.form()
 
-      if (isCurrentSearch || isCurrentList) {
-        setView(isCurrentSearch ? "search" : "list")
+      if (pnlSearch && isSearchActive) {
+        setView("search")
         if (form) form.style.display = "none"
 
-        // 👇 🌟 ここに追加：学務システムのボタン状態から現在の言語を自動判定
-        const engBtn = document.getElementById(
-          "ctl00_imgBtnEngBtm"
-        ) as HTMLAnchorElement | null
-        if (engBtn && engBtn.getAttribute("disabled") === "disabled") {
-          setLang("en")
-        } else {
-          setLang("ja")
-        }
+        // 言語判定
+        const engBtn = DOM.search.getEngBtn()
+        setLang(engBtn?.getAttribute("disabled") === "disabled" ? "en" : "ja")
 
-        const rootHtml = document.documentElement
-        const rootBody = document.body
-        rootHtml.style.minWidth = "100vw"
-        rootHtml.style.overflowX = "auto"
-        rootBody.style.minWidth = "100vw"
-        rootBody.style.overflowX = "auto"
-        rootBody.style.backgroundColor = "#ffffff"
-
-        if (isCurrentSearch) {
-          scrapeAllOptions()
-        } else {
-          scrapeResults()
-          scrapeExhaustiveConditions()
-        }
+        scrapeAllOptions()
+      } else if (pnlList && isSearchListActive) {
+        setView("list")
+        if (form) form.style.display = "none"
+        scrapeResults()
+        scrapeExhaustiveConditions()
       } else {
         setView("original")
         if (form) form.style.display = "block"
-        document.documentElement.style.minWidth = "0"
-        document.body.style.minWidth = "0"
       }
     }
-
     handleDisplay()
-  }, [isSearchActive, isSearchListActive])
+  }, [])
 
   const scrapeAllOptions = () => {
-    const getOpts = (id: string) => {
-      const el = document.getElementById(id) as HTMLSelectElement
-      return el
+    const getOpts = (el: HTMLSelectElement | null) =>
+      el
         ? Array.from(el.options).map((o) => ({ text: o.text, value: o.value }))
         : []
-    }
 
     setOptions({
-      years: getOpts("ctl00_phContents_ddl_year"),
-      orgs: getOpts("ctl00_phContents_ddl_org").filter(
+      years: getOpts(DOM.search.getYearSelect()),
+      orgs: getOpts(DOM.search.getOrgSelect()).filter(
         (o) => o.value !== "NULL"
       ),
-      faculties: getOpts("ctl00_phContents_ddl_fac"),
-      grads: getOpts("ctl00_phContents_ddl_grad"),
-      terms: getOpts("ctl00_phContents_ddl_lctterm"),
-      days: getOpts("ctl00_phContents_ddl_day"),
-      times: getOpts("ctl00_phContents_ddl_time"),
-      sorts: getOpts("ctl00_phContents_ddl_sbj_sort"),
-      langs: getOpts("ctl00_phContents_ddl_lang"),
-      methods: getOpts("ctl00_phContents_ddl_lct_do_type")
+      faculties: getOpts(DOM.search.getFacultySelect()),
+      grads: getOpts(DOM.search.getGradSelect()),
+      terms: getOpts(DOM.search.getTermSelect()),
+      days: getOpts(DOM.search.getDaySelect()),
+      times: getOpts(DOM.search.getTimeSelect()),
+      sorts: getOpts(DOM.search.getSortSelect()),
+      langs: getOpts(DOM.search.getLangSelect()),
+      methods: getOpts(DOM.search.getMethodSelect())
     })
 
-    // 値を取得するための便利なヘルパー関数を用意
-    const getVal = (id: string) =>
-      (document.getElementById(id) as HTMLInputElement | HTMLSelectElement)
-        ?.value || ""
-    const getSelectVal = (id: string) =>
-      (document.getElementById(id) as HTMLSelectElement)?.value || "NULL"
-    const getDayVal = (id: string) =>
-      (document.getElementById(id) as HTMLSelectElement)?.value || "-1"
-
-    // チェックされているSDGsの値を配列として
-    const checkedSdgs = Array.from(
-      document.querySelectorAll(
-        'input[type="checkbox"][name*="cblSDGs"]:checked'
-      )
-    ).map((cb) => (cb as HTMLInputElement).value)
-
-    //状態を更新
-    setInputState((prev) => ({
-      ...prev,
-      year: getVal("ctl00_phContents_ddl_year"),
-      org: getSelectVal("ctl00_phContents_ddl_org"),
-      faculty: getSelectVal("ctl00_phContents_ddl_fac"),
-      grad: getSelectVal("ctl00_phContents_ddl_grad"),
-      term: getSelectVal("ctl00_phContents_ddl_lctterm"), // 追加: 学期
-      day: getDayVal("ctl00_phContents_ddl_day"), // 追加: 曜日
-      time: getSelectVal("ctl00_phContents_ddl_time"),
-      sort: getSelectVal("ctl00_phContents_ddl_sbj_sort"), // 追加: 科目種別
-      sbj: getVal("ctl00_phContents_txt_sbj_Search"), // 追加: 科目名
-      staff: getVal("ctl00_phContents_txt_staff_Search"), // 追加: 教員名
-      keyword: getVal("ctl00_phContents_txt_keyword_Search"), // 追加: キーワード
-      all: getVal("ctl00_phContents_txt_all_Search"), // 追加: 全文検索
-      experience: getSelectVal("ctl00_phContents_ddl_experience"), // 追加: 実務経験
-      langCode: getSelectVal("ctl00_phContents_ddl_lang"), // 追加: 言語コード
-      method: getSelectVal("ctl00_phContents_ddl_lct_do_type"), // 追加: 授業実施方式
-      sdgs: checkedSdgs // 追加: SDGs
-    }))
+    setInputState({
+      year: DOM.search.getYearSelect()?.value || "",
+      org: DOM.search.getOrgSelect()?.value || "NULL",
+      faculty: DOM.search.getFacultySelect()?.value || "NULL",
+      grad: DOM.search.getGradSelect()?.value || "NULL",
+      term: DOM.search.getTermSelect()?.value || "NULL",
+      day: DOM.search.getDaySelect()?.value || "-1",
+      time: DOM.search.getTimeSelect()?.value || "NULL",
+      sort: DOM.search.getSortSelect()?.value || "NULL",
+      sbj: DOM.search.getSbjInput()?.value || "",
+      staff: DOM.search.getStaffInput()?.value || "",
+      keyword: DOM.search.getKeywordInput()?.value || "",
+      all: DOM.search.getAllInput()?.value || "",
+      experience: DOM.search.getExpSelect()?.value || "NULL",
+      langCode: DOM.search.getLangSelect()?.value || "NULL",
+      method: DOM.search.getMethodSelect()?.value || "NULL",
+      sdgs: []
+    })
   }
 
   const groupedFaculties = useMemo(() => {
@@ -656,18 +636,15 @@ const App = () => {
     }))
     if (errors.org) setErrors((prev) => ({ ...prev, org: false }))
 
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const ddlOrg = document.getElementById(
-      "ctl00_phContents_ddl_org"
-    ) as HTMLSelectElement
+    // アダプター経由で要素を取得
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
+    const ddlOrg = DOM.search.getOrgSelect()
 
     if (form && eventTarget && ddlOrg) {
       ddlOrg.value = val
       eventTarget.value = "ctl00$phContents$ddl_org"
-      form.submit() // CSPエラーにならないネイティブ送信
+      form.submit()
     }
   }
 
@@ -880,65 +857,30 @@ const App = () => {
   // 🌟 4. 【手順3の完成形】シラバス検索ボタンが押されたときのバリデーション＆同期送信
   // =================================================================
   const handleFinalSearch = () => {
-    // ① 未入力がないか必須項目をチェック
-    const newErrors = {
-      year: !inputState.year,
-      org: inputState.org === "NULL",
-      faculty: inputState.faculty === "NULL"
-    }
-
-    // ② どこか1つでもエラーがあれば処理を止めて上部にスクロール
-    if (newErrors.year || newErrors.org || newErrors.faculty) {
-      setErrors(newErrors)
-      window.scrollTo({ top: 0, behavior: "smooth" })
-      return
-    }
-
-    // ③ エラーがなければ状態をクリアして同期処理へ進む
-    setErrors({ year: false, org: false, faculty: false })
-
-    // 元画面の要素へ値を同期するヘルパー
-    const sync = (id: string, val: string) => {
-      const el = document.getElementById(id) as
-        | HTMLSelectElement
-        | HTMLInputElement
+    const sync = (
+      el: HTMLInputElement | HTMLSelectElement | null,
+      val: string
+    ) => {
       if (el) el.value = val
     }
 
-    // 各入力値を学務システム本来のフォーム要素へ同期
-    sync("ctl00_phContents_ddl_year", inputState.year)
-    sync("ctl00_phContents_ddl_org", inputState.org)
-    sync("ctl00_phContents_ddl_fac", inputState.faculty)
-    sync("ctl00_phContents_ddl_grad", inputState.grad)
-    sync("ctl00_phContents_ddl_lctterm", inputState.term)
-    sync("ctl00_phContents_ddl_day", inputState.day)
-    sync("ctl00_phContents_ddl_time", inputState.time)
-    sync("ctl00_phContents_ddl_sbj_sort", inputState.sort)
-    sync("ctl00_phContents_txt_sbj_Search", inputState.sbj)
-    sync("ctl00_phContents_txt_staff_Search", inputState.staff)
-    sync("ctl00_phContents_txt_keyword_Search", inputState.keyword)
-    sync("ctl00_phContents_txt_all_Search", inputState.all)
-    sync("ctl00_phContents_ddl_experience", inputState.experience)
-    sync("ctl00_phContents_ddl_lang", inputState.langCode)
-    sync("ctl00_phContents_ddl_lct_do_type", inputState.method)
+    sync(DOM.search.getYearSelect(), inputState.year)
+    sync(DOM.search.getOrgSelect(), inputState.org)
+    sync(DOM.search.getFacultySelect(), inputState.faculty)
+    sync(DOM.search.getGradSelect(), inputState.grad)
+    sync(DOM.search.getTermSelect(), inputState.term)
+    sync(DOM.search.getDaySelect(), inputState.day)
+    sync(DOM.search.getTimeSelect(), inputState.time)
+    sync(DOM.search.getSortSelect(), inputState.sort)
+    sync(DOM.search.getSbjInput(), inputState.sbj)
+    sync(DOM.search.getStaffInput(), inputState.staff)
+    sync(DOM.search.getKeywordInput(), inputState.keyword)
+    sync(DOM.search.getAllInput(), inputState.all)
+    sync(DOM.search.getExpSelect(), inputState.experience)
+    sync(DOM.search.getLangSelect(), inputState.langCode)
+    sync(DOM.search.getMethodSelect(), inputState.method)
 
-    // SDGsのチェックボックス要素を同期
-    const allSdgsCbs = document.querySelectorAll(
-      'input[type="checkbox"][name*="cblSDGs"]'
-    )
-    allSdgsCbs.forEach((cb: HTMLInputElement) => (cb.checked = false))
-    inputState.sdgs.forEach((val) => {
-      const target = document.querySelector(
-        `input[id$="cblSDGs_${parseInt(val) - 1}"]`
-      ) as HTMLInputElement
-      if (target) target.checked = true
-    })
-
-    // 💡 学務システム本来の「検索」ボタンをプログラムでクリック
-    const btn = document.getElementById(
-      "ctl00_phContents_ctl16_btnSearch"
-    ) as HTMLElement
-    if (btn) btn.click()
+    DOM.search.getSearchBtn()?.click()
   }
 
   // 💡 【修正】戻るボタンのCSPエラー対策
@@ -958,21 +900,15 @@ const App = () => {
 
   // 💡 【修正】ページネーションのCSPエラー対策
   const handlePageClick = (pageText: string) => {
-    const pagerTable = document.querySelector(
-      "#ctl00_phContents_ucGrid_grv tr td[colspan] table"
-    )
+    const pagerTable = DOM.getPagerTable()
     if (!pagerTable) return
 
     const links = Array.from(pagerTable.querySelectorAll("a"))
     const targetLink = links.find((a) => a.textContent?.trim() === pageText)
 
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const eventArgument = document.getElementById(
-      "__EVENTARGUMENT"
-    ) as HTMLInputElement
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
+    const eventArgument = DOM.getEventArgument()
 
     if (form && eventTarget && eventArgument) {
       if (targetLink) {
@@ -990,7 +926,6 @@ const App = () => {
       form.submit()
     }
   }
-
   const nextPageText = useMemo(() => {
     const currentIndex = pages.findIndex((p) => p.isCurrent)
     if (currentIndex !== -1 && currentIndex < pages.length - 1) {
