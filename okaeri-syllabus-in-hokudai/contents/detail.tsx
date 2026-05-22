@@ -5,7 +5,6 @@ import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { DOM } from "~lib/domAdapter" // アダプターをインポート
-import { splitLang } from "~lib/utils"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -701,16 +700,43 @@ const SyllabusModernUI = () => {
 
   useEffect(() => {
     const form = DOM.form()
-    if (form) form.style.visibility = "hidden"
+
+    // 💡 ストレージが読み込み中（undefined）の場合は何もしない
+    if (isDetailActive === undefined) return
+
+    // 💡 設定が「オフ」の場合は、元の画面を戻して終了
+    if (isDetailActive === false) {
+      if (form) {
+        form.style.visibility = "visible"
+        form.style.position = ""
+        form.style.left = ""
+        form.style.display = "" // 古い display: none が残っていた場合の保険
+      }
+      document.body.style.overflow = "auto"
+      document.body.style.minWidth = "0"
+      return
+    }
+
+    // 💡 設定が「オン」の場合：安全な方法で元フォームを隠す
+    if (form) {
+      form.style.visibility = "hidden"
+      form.style.position = "absolute"
+      form.style.left = "-99999px"
+    }
+    document.body.style.overflow = "auto"
+    document.body.style.minWidth = "1100px"
+    document.body.style.backgroundColor = "#ffffff"
 
     const lctCdEl = DOM.detail.getLctCd()
     const params = new URLSearchParams(window.location.search)
     const urlCd = params.get("lct_cd")
     const lctCd = urlCd || (lctCdEl ? lctCdEl.textContent?.trim() : "")
     const langParam = params.get("lang")
+
     if (langParam === "ja" || langParam === "en") {
       setLang(langParam)
     }
+
     if (lctCd) {
       const storage = new Storage({ area: "local" })
       storage.get("timetable_cache").then((cache: any) => {
@@ -719,24 +745,6 @@ const SyllabusModernUI = () => {
         }
       })
     }
-    const oldForm = document.getElementById("aspnetForm")
-
-    // 💡 ストレージが読み込み中（undefined）の場合は何もしない
-    if (isDetailActive === undefined) return
-
-    // 💡 設定が「オフ」の場合は、隠していた元の画面を戻して終了
-    if (isDetailActive === false) {
-      if (oldForm) oldForm.style.display = "block"
-      document.body.style.overflow = "auto"
-      document.body.style.minWidth = "0"
-      return
-    }
-
-    // 💡 設定が「オン」の場合の処理
-    if (oldForm) oldForm.style.display = "none"
-    document.body.style.overflow = "auto"
-    document.body.style.minWidth = "1100px"
-    document.body.style.backgroundColor = "#ffffff"
 
     const extracted = targetDataList.map((item) => {
       const el = DOM.detail.getElement(item.id.replace("ctl00_phContents_", ""))
@@ -775,8 +783,14 @@ const SyllabusModernUI = () => {
       }
     })
     setTableData(extracted)
+
+    // 💡 クリーンアップ処理：React側のエラーやアンマウント時にサイトを壊さない
     return () => {
-      if (form) form.style.visibility = "visible"
+      if (form) {
+        form.style.visibility = "visible"
+        form.style.position = ""
+        form.style.left = ""
+      }
     }
   }, [isDetailActive])
 
