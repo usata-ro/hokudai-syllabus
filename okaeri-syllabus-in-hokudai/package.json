@@ -1,7 +1,7 @@
 {
   "name": "okaeri-syllabus-in-hokudai",
   "displayName": "Okaeri syllabus in hokudai",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "北海道大学のシラバスをモダンなUIに変更します。読み込みにバグがあるかもしれません。拡張機能の使用は参考までにとどめ、元のページも必ず参照し、自己責任で使用してください。",
   "author": "usata",
   "scripts": {
@@ -18,7 +18,7 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@types/chrome": "0.0.258",
-    "@types/node": "20.11.5",
+    "@types/node": "^20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
     "autoprefixer": "^10.5.0",
@@ -31,6 +31,16 @@
     "host_permissions": [
       "https://gakumu.academic.hokudai.ac.jp/Portal/Public/Syllabus/*"
     ],
-    "permissions": []
+    "permissions": [],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "fonts/*.ttf"
+        ],
+        "matches": [
+          "https://gakumu.academic.hokudai.ac.jp/*"
+        ]
+      }
+    ]
   }
 }

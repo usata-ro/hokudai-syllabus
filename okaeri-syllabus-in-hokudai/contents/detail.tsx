@@ -1,8 +1,12 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useState } from "react"
+import regularFont from "url:~assets/fonts/GenInterfaceJP-Regular.ttf"
+import boldFont from "url:~assets/fonts/GenInterfaceJPDisplay-Bold.ttf"
 
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
+
+import { DOM } from "~lib/domAdapter"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -12,10 +16,22 @@ export const config: PlasmoCSConfig = {
 
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
+
+  // インポートした変数をそのままCSSに埋め込みます
   style.textContent = `
-    /* 指定されたWebフォントの読み込み */
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/400.css');
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/display-800.css');
+    @font-face {
+      font-family: 'Gen Interface JP';
+      src: url('${regularFont}') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Gen Interface JP Display';
+      src: url('${boldFont}') format('truetype');
+      font-weight: 800;
+      font-style: normal;
+    }
 
     :host {
       --text-color: #001C0C;
@@ -640,34 +656,41 @@ type TableRow = {
   fullWidth: boolean
 }
 
+// 🌟 12. innerHTMLを使わない安全なテキスト抽出への修正
 const extractTextWithLinks = (el: HTMLElement | null): string => {
   if (!el) return ""
 
-  let html = el.innerHTML
-  html = html.replace(/<br\s*\/?>/gi, "\n")
-  html = html.replace(/<\/span>/gi, "</span>\n")
-  html = html.replace(/<\/p>/gi, "</p>\n")
-  html = html.replace(/<\/div>/gi, "</div>\n")
-
-  const tempDiv = document.createElement("div")
-  tempDiv.innerHTML = html
-
-  const links = tempDiv.querySelectorAll("a")
-  links.forEach((a) => {
-    const url = a.href
-    if (url && url.startsWith("http") && a.textContent?.trim() !== url) {
-      a.textContent = `${a.textContent?.trim()}\n${url}\n`
+  let text = ""
+  el.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent
+    } else if (
+      node.nodeName.toLowerCase() === "br" ||
+      node.nodeName.toLowerCase() === "p" ||
+      node.nodeName.toLowerCase() === "div"
+    ) {
+      text += "\n"
+    } else if (node.nodeName.toLowerCase() === "a") {
+      const a = node as HTMLAnchorElement
+      const url = a.href
+      if (url && url.startsWith("http") && a.textContent?.trim() !== url) {
+        text += `${a.textContent?.trim()}\n${url}\n`
+      } else {
+        text += a.textContent
+      }
+    } else if (node.nodeName.toLowerCase() === "span") {
+      text += node.textContent + "\n"
+    } else {
+      text += node.textContent
     }
   })
 
-  let text = tempDiv.textContent || ""
-  text = text
+  return text
     .split("\n")
     .map((line) => line.trim())
     .join("\n")
-  text = text.replace(/\n{3,}/g, "\n\n").trim()
-
-  return text
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
 }
 
 const linkify = (text: string) => {
@@ -691,25 +714,50 @@ const linkify = (text: string) => {
 
 // 4. メインのUIコンポーネント
 const SyllabusModernUI = () => {
-  // 💡 ポップアップと同じキー名（"isDetailActive"）を指定して設定を読み込み
   const [isDetailActive] = useStorage("isDetailActive", true)
   const [tableData, setTableData] = useState<TableRow[]>([])
   const [lang, setLang] = useState<"ja" | "en">("ja")
-  // 🌟 修正：不具合の起きやすい useStorage フックを削除し、確実な useState を用意
   const [timeData, setTimeData] = useState<any>(null)
 
   useEffect(() => {
-    // 🌟 修正：URLとHTML画面の両方から時間割番号を探し、直接ストレージを読み込む
-    const lctCdEl = document.getElementById(
-      "ctl00_phContents_ucSummary_txtlct_cd_lbl"
-    )
+    const form = DOM.form()
+
+    // 💡 ストレージが読み込み中（undefined）の場合は何もしない
+    if (isDetailActive === undefined) return
+
+    // 💡 設定が「オフ」の場合は、元の画面を戻して終了
+    if (isDetailActive === false) {
+      if (form) {
+        form.style.visibility = "visible"
+        form.style.position = ""
+        form.style.left = ""
+        form.style.display = ""
+      }
+      document.body.style.overflow = "auto"
+      document.body.style.minWidth = "0"
+      return
+    }
+
+    // 💡 設定が「オン」の場合：安全な方法で元フォームを隠す
+    if (form) {
+      form.style.visibility = "hidden"
+      form.style.position = "absolute"
+      form.style.left = "-99999px"
+    }
+    document.body.style.overflow = "auto"
+    document.body.style.minWidth = "1100px"
+    document.body.style.backgroundColor = "#ffffff"
+
+    const lctCdEl = DOM.detail.getLctCd()
     const params = new URLSearchParams(window.location.search)
-    const urlCd = new URLSearchParams(window.location.search).get("lct_cd")
+    const urlCd = params.get("lct_cd")
     const lctCd = urlCd || (lctCdEl ? lctCdEl.textContent?.trim() : "")
     const langParam = params.get("lang")
+
     if (langParam === "ja" || langParam === "en") {
       setLang(langParam)
     }
+
     if (lctCd) {
       const storage = new Storage({ area: "local" })
       storage.get("timetable_cache").then((cache: any) => {
@@ -718,32 +766,17 @@ const SyllabusModernUI = () => {
         }
       })
     }
-    const oldForm = document.getElementById("aspnetForm")
-
-    // 💡 ストレージが読み込み中（undefined）の場合は何もしない
-    if (isDetailActive === undefined) return
-
-    // 💡 設定が「オフ」の場合は、隠していた元の画面を戻して終了
-    if (isDetailActive === false) {
-      if (oldForm) oldForm.style.display = "block"
-      document.body.style.overflow = "auto"
-      document.body.style.minWidth = "0"
-      return
-    }
-
-    // 💡 設定が「オン」の場合の処理
-    if (oldForm) oldForm.style.display = "none"
-    document.body.style.overflow = "auto"
-    document.body.style.minWidth = "1100px"
-    document.body.style.backgroundColor = "#ffffff"
 
     const extracted = targetDataList.map((item) => {
-      let text = extractTextWithLinks(document.getElementById(item.id))
+      const el = DOM.detail.getElement(item.id.replace("ctl00_phContents_", ""))
+      let text = extractTextWithLinks(el)
+
       if (item.fallbackIds) {
         item.fallbackIds.forEach((fid) => {
-          const fallbackText = extractTextWithLinks(
-            document.getElementById(fid)
+          const fallbackEl = DOM.detail.getElement(
+            fid.replace("ctl00_phContents_", "")
           )
+          const fallbackText = extractTextWithLinks(fallbackEl)
           if (fallbackText) text += (text ? "\n\n" : "") + fallbackText
         })
       }
@@ -771,9 +804,17 @@ const SyllabusModernUI = () => {
       }
     })
     setTableData(extracted)
+
+    // 💡 クリーンアップ処理：React側のエラーやアンマウント時にサイトを壊さない
+    return () => {
+      if (form) {
+        form.style.visibility = "visible"
+        form.style.position = ""
+        form.style.left = ""
+      }
+    }
   }, [isDetailActive])
 
-  // 💡 設定がOFFなら、新しいUIをレンダリングしない
   if (isDetailActive === false || tableData.length === 0) return null
 
   // --- iNAZO検索用のクエリを取得する処理 ---

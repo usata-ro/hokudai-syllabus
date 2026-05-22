@@ -1,8 +1,23 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import regularFont from "url:~assets/fonts/GenInterfaceJP-Regular.ttf"
+import boldFont from "url:~assets/fonts/GenInterfaceJPDisplay-Bold.ttf"
 
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
+
+import { DOM } from "~lib/domAdapter"
+import { cleanCache, debounce, observeDOM, splitLang } from "~lib/utils"
+
+// 🌟 7. Postback Allowlist (予期しないRCEを防ぐ)
+const ALLOWED_TARGETS = [
+  "ctl00$phContents$ucGrid$grv",
+  "ctl00$phContents$ddl_year",
+  "ctl00$phContents$ddl_org",
+  "ctl00$imgBtnJpnBtm",
+  "ctl00$imgBtnEngBtm",
+  "ctl00$phContents$lnkReturn_Up$lnk"
+]
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -12,10 +27,23 @@ export const config: PlasmoCSConfig = {
 
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
-  style.textContent = `
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/400.css');
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/display-800.css');
 
+  // インポートした変数をそのままCSSに埋め込みます
+  style.textContent = `
+    @font-face {
+      font-family: 'Gen Interface JP';
+      src: url('${regularFont}') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Gen Interface JP Display';
+      src: url('${boldFont}') format('truetype');
+      font-weight: 800;
+      font-style: normal;
+    }
+ 
     :host {
       --text-color: #001C0C;
       --main-color: #1F8C32;
@@ -74,7 +102,7 @@ export const getStyle: PlasmoGetStyle = () => {
     .header-left { display: flex; align-items: center; gap: 24px; }
     .modern-header h1 { font-family: "Gen Interface JP Display", sans-serif; font-weight: 800; margin: 0; font-size: 1.35rem; letter-spacing: 0.05em; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
-.header-sub-nav {
+    .header-sub-nav {
       display: flex;
       gap: 20px;
       font-size: 0.95rem;
@@ -119,7 +147,7 @@ export const getStyle: PlasmoGetStyle = () => {
       transition: all 0.2s ease;
       user-select: none;
       display: flex;
-      align-items: center
+      align-items: center;
     }
     .chip:hover { border-color: var(--main-color); background: #f0f7f1; }
     .chip.active { background: var(--main-color); color: white; border-color: var(--main-color); box-shadow: 0 4px 10px rgba(31,140,50,0.2); }
@@ -128,7 +156,6 @@ export const getStyle: PlasmoGetStyle = () => {
     .faculty-group { display: flex; flex-direction: column; gap: 8px; }
     .faculty-group-label { font-size: 0.85rem; font-weight: 800; color: #666; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
-/* テキスト入力とセレクトボックスの共通スタイル */
     select, input[type="text"] { 
       width: 100%; 
       padding: 14px; 
@@ -147,17 +174,13 @@ export const getStyle: PlasmoGetStyle = () => {
       box-shadow: 0 0 0 3px rgba(31, 140, 50, 0.15);
     }
 
-/* セレクトボックス*/
-    select::-ms-expand {
-      display: none !important;
-    }
+    select::-ms-expand { display: none !important; }
 
     select {
       -webkit-appearance: none !important;
       -moz-appearance: none !important;
       appearance: none !important;
       cursor: pointer;
-      /* backgroundのショートハンドを使わず、1つずつ!importantで指定する */
       background-color: #fff !important;
       background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjMUY4QzMyJyBzdHJva2Utd2lkdGg9JzIuNScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJz48cG9seWxpbmUgcG9pbnRzPSc2IDkgMTIgMTUgMTggOScvPjwvc3ZnPg==") !important;
       background-repeat: no-repeat !important;
@@ -166,11 +189,8 @@ export const getStyle: PlasmoGetStyle = () => {
       padding-right: 40px !important;
     }
     
-    /* マウスホバー時に背景と枠線を少し優しく変化させる */
-    select:hover {
-      background-color: #f9fdfa;
-      border-color: var(--accent-color);
-    }
+    select:hover { background-color: #f9fdfa; border-color: var(--accent-color); }
+    
     .btn-submit { background: var(--main-color); color: white; border: none; padding: 20px 100px; font-size: 1.25rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 20px rgba(31, 140, 50, 0.25); display: block; margin: 40px auto 0; }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(31, 140, 50, 0.35); filter: brightness(1.1); }
 
@@ -184,29 +204,10 @@ export const getStyle: PlasmoGetStyle = () => {
     .sdgs-item input { width: 18px; height: 18px; accent-color: var(--main-color); cursor: pointer; }
 
     .conditions-summary { 
-      background: white; 
-      border: 1px solid var(--border-color); 
-      border-radius: 12px; 
-      padding: 0;
-      margin-bottom: 24px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-      overflow: hidden;
+      background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 0; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden;
     }
-    .conditions-header {
-      padding: 16px 24px;
-      background: #f9faf9;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    .conditions-grid { 
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 16px; 
-      padding: 24px;
-    }
+    .conditions-header { padding: 16px 24px; background: #f9faf9; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .conditions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px; }
     .condition-item { display: flex; flex-direction: column; border-bottom: 1px dashed #eee; padding-bottom: 6px; }
     .condition-label { font-weight: bold; color: #888; margin-bottom: 2px; font-size: 0.85rem; }
     .condition-val { font-weight: 800; color: var(--main-color); line-height: 1.2; font-size: 1rem; }
@@ -240,78 +241,14 @@ export const getStyle: PlasmoGetStyle = () => {
     .btn-back-link { background: white; border: 1.5px solid #ccc; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: bold; color: #666; font-size: 1rem; transition: background 0.2s; }
     .btn-back-link:hover { background: #f9f9f9; }
 
+    .required-badge { background-color: #e53935; color: white; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: bold; }
+    .error-text { color: #e53935; font-size: 0.9rem; font-weight: bold; margin-top: 8px; }
+    .has-error .chip { border-color: #ffcdd2; background-color: #fff8f8; color: #d32f2f; }
+    .has-error select { border-color: #e53935; background-color: #fff8f8; }
+    .has-error .faculty-container { border-color: #e53935; background-color: #fff8f8; }
 
-/* 🌟 エラーと必須バッジ用のCSS */
-    .required-badge {
-      background-color: #e53935;
-      color: white;
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-      margin-left: 8px;
-      vertical-align: middle;
-      font-weight: bold;
-    }
-    .error-text {
-      color: #e53935;
-      font-size: 0.9rem;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-    .has-error .chip {
-      border-color: #ffcdd2;
-      background-color: #fff8f8;
-      color: #d32f2f;
-    }
-    .has-error select {
-      border-color: #e53935;
-      background-color: #fff8f8;
-    }
-    .has-error .faculty-container {
-      border-color: #e53935;
-      background-color: #fff8f8;
-    }
-/* 🌟 リセットボタンのスタイル */
-    .btn-reset { 
-      background: transparent; 
-      color: #666; 
-      border: 1.5px solid #ccc; 
-      padding: 16px 40px; 
-      font-size: 1rem; 
-      font-weight: bold; 
-      border-radius: 50px; 
-      cursor: pointer; 
-      transition: all 0.2s; 
-    }
-    .btn-reset:hover { 
-      background: #f0f0f0; 
-      color: #333; 
-      border-color: #aaa;
-    }
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      margin-top: 40px;
-    }
-      /* 🌟 新しいリセットボタンのスタイル */
-    .btn-reset-text {
-      background: #fff;
-      color: #666;
-      border: 1.5px solid #d1e6d5;
-      padding: 6px 14px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-reset-text:hover {
-      background: #fff8f8;
-      color: #e53935;
-      border-color: #ffcdd2;
-    }
+    .btn-reset-text { background: #fff; color: #666; border: 1.5px solid #d1e6d5; padding: 6px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .btn-reset-text:hover { background: #fff8f8; color: #e53935; border-color: #ffcdd2; }
   `
   return style
 }
@@ -397,8 +334,6 @@ const UI_LANG = {
     errOrg: "課程区分を選択してください。",
     errFaculty: "開講学部・研究科を選択してください。",
     facultyLabel: "学部・研究科を選択",
-
-    /* 🌟 追加：検索結果画面（一覧）用の日本語辞書 */
     resultTitle: "検索結果",
     backToSearch: "← 検索画面に戻る",
     currentConditionsTitle: "🔍 現在の検索条件を表示・変更",
@@ -454,8 +389,6 @@ const UI_LANG = {
     errOrg: "Please select a course classification.",
     errFaculty: "Please select a faculty or graduate school.",
     facultyLabel: "Select Faculty / Graduate School",
-
-    /* 🌟 追加：検索結果画面（一覧）用の英語辞書 */
     resultTitle: "Search Results",
     backToSearch: "← Back to Search Page",
     currentConditionsTitle: "🔍 Show / Modify Current Search Conditions",
@@ -486,7 +419,7 @@ const App = () => {
   const [showSdgs, setShowSdgs] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const [options, setOptions] = useState({
+  const [options, setOptions] = useState<any>({
     years: [],
     orgs: [],
     faculties: [],
@@ -515,164 +448,169 @@ const App = () => {
     experience: "NULL",
     langCode: "NULL",
     method: "NULL",
-    sdgs: []
+    sdgs: [] as string[]
   })
 
-  // 🌟 エラー状態の管理を追加
+  const inputStateRef = useRef(inputState)
+  useEffect(() => {
+    inputStateRef.current = inputState
+  }, [inputState])
+
   const [errors, setErrors] = useState({
     year: false,
     org: false,
     faculty: false
   })
+  const [results, setResults] = useState<any[]>([])
+  const [pages, setPages] = useState<any[]>([])
+  const [currentConditions, setCurrentConditions] = useState<any[]>([])
 
-  const [results, setResults] = useState([])
-  const [pages, setPages] = useState([])
-  const [currentConditions, setCurrentConditions] = useState([])
+  // 🌟 9. debounce 処理をキャッシュ（サーバー負荷軽減策）
+  const submitDebounced = useMemo(
+    () =>
+      debounce((form: HTMLFormElement) => {
+        form.submit()
+      }, 500),
+    []
+  )
 
   useEffect(() => {
-    const pnlSearch = document.getElementById("ctl00_phContents_pnlSearch")
-    const pnlList = document.getElementById("ctl00_phContents_pnlList")
-    const form = document.getElementById("aspnetForm")
+    const form = DOM.form()
 
-    const handleDisplay = () => {
-      if (isSearchActive === undefined || isSearchListActive === undefined)
-        return
+    const initializeView = () => {
+      const pnlSearch = DOM.search.pnlSearch()
+      const pnlList = DOM.search.pnlList()
 
-      const isCurrentSearch = pnlSearch && isSearchActive
-      const isCurrentList = pnlList && isSearchListActive
-
-      if (isCurrentSearch || isCurrentList) {
-        setView(isCurrentSearch ? "search" : "list")
-        if (form) form.style.display = "none"
-
-        // 👇 🌟 ここに追加：学務システムのボタン状態から現在の言語を自動判定
-        const engBtn = document.getElementById(
-          "ctl00_imgBtnEngBtm"
-        ) as HTMLAnchorElement | null
-        if (engBtn && engBtn.getAttribute("disabled") === "disabled") {
-          setLang("en")
-        } else {
-          setLang("ja")
+      if (pnlSearch && isSearchActive) {
+        setView("search")
+        if (form) {
+          form.style.visibility = "hidden"
+          form.style.position = "absolute"
+          form.style.left = "-99999px"
         }
+        const engBtn = DOM.search.getEngBtn()
+        setLang(engBtn?.getAttribute("disabled") === "disabled" ? "en" : "ja")
 
-        const rootHtml = document.documentElement
-        const rootBody = document.body
-        rootHtml.style.minWidth = "100vw"
-        rootHtml.style.overflowX = "auto"
-        rootBody.style.minWidth = "100vw"
-        rootBody.style.overflowX = "auto"
-        rootBody.style.backgroundColor = "#ffffff"
-
-        if (isCurrentSearch) {
-          scrapeAllOptions()
-        } else {
+        // 🌟 10. MutationObserverを使用して安全にDOMの安定を待つ（不完全DOM対応）
+        observeDOM(document.body, scrapeAllOptions)
+      } else if (pnlList && isSearchListActive) {
+        setView("list")
+        if (form) {
+          form.style.visibility = "hidden"
+          form.style.position = "absolute"
+          form.style.left = "-99999px"
+        }
+        observeDOM(document.body, () => {
           scrapeResults()
           scrapeExhaustiveConditions()
-        }
+        })
       } else {
         setView("original")
-        if (form) form.style.display = "block"
-        document.documentElement.style.minWidth = "0"
-        document.body.style.minWidth = "0"
+        if (form) {
+          form.style.visibility = "visible"
+          form.style.position = ""
+          form.style.left = ""
+        }
       }
     }
 
-    handleDisplay()
+    initializeView()
+
+    return () => {
+      if (form) {
+        form.style.visibility = "visible"
+        form.style.position = ""
+        form.style.left = ""
+      }
+    }
   }, [isSearchActive, isSearchListActive])
 
+  if (isSearchActive === undefined || isSearchListActive === undefined) {
+    return null
+  }
+
   const scrapeAllOptions = () => {
-    const getOpts = (id: string) => {
-      const el = document.getElementById(id) as HTMLSelectElement
-      return el
+    const getOpts = (el: HTMLSelectElement | null) =>
+      el
         ? Array.from(el.options).map((o) => ({ text: o.text, value: o.value }))
         : []
-    }
 
     setOptions({
-      years: getOpts("ctl00_phContents_ddl_year"),
-      orgs: getOpts("ctl00_phContents_ddl_org").filter(
+      years: getOpts(DOM.search.getYearSelect()),
+      orgs: getOpts(DOM.search.getOrgSelect()).filter(
         (o) => o.value !== "NULL"
       ),
-      faculties: getOpts("ctl00_phContents_ddl_fac"),
-      grads: getOpts("ctl00_phContents_ddl_grad"),
-      terms: getOpts("ctl00_phContents_ddl_lctterm"),
-      days: getOpts("ctl00_phContents_ddl_day"),
-      times: getOpts("ctl00_phContents_ddl_time"),
-      sorts: getOpts("ctl00_phContents_ddl_sbj_sort"),
-      langs: getOpts("ctl00_phContents_ddl_lang"),
-      methods: getOpts("ctl00_phContents_ddl_lct_do_type")
+      faculties: getOpts(DOM.search.getFacultySelect()),
+      grads: getOpts(DOM.search.getGradSelect()),
+      terms: getOpts(DOM.search.getTermSelect()),
+      days: getOpts(DOM.search.getDaySelect()),
+      times: getOpts(DOM.search.getTimeSelect()),
+      sorts: getOpts(DOM.search.getSortSelect()),
+      langs: getOpts(DOM.search.getLangSelect()),
+      methods: getOpts(DOM.search.getMethodSelect())
     })
 
-    // 値を取得するための便利なヘルパー関数を用意
-    const getVal = (id: string) =>
-      (document.getElementById(id) as HTMLInputElement | HTMLSelectElement)
-        ?.value || ""
-    const getSelectVal = (id: string) =>
-      (document.getElementById(id) as HTMLSelectElement)?.value || "NULL"
-    const getDayVal = (id: string) =>
-      (document.getElementById(id) as HTMLSelectElement)?.value || "-1"
-
-    // チェックされているSDGsの値を配列として
-    const checkedSdgs = Array.from(
-      document.querySelectorAll(
-        'input[type="checkbox"][name*="cblSDGs"]:checked'
-      )
-    ).map((cb) => (cb as HTMLInputElement).value)
-
-    //状態を更新
-    setInputState((prev) => ({
-      ...prev,
-      year: getVal("ctl00_phContents_ddl_year"),
-      org: getSelectVal("ctl00_phContents_ddl_org"),
-      faculty: getSelectVal("ctl00_phContents_ddl_fac"),
-      grad: getSelectVal("ctl00_phContents_ddl_grad"),
-      term: getSelectVal("ctl00_phContents_ddl_lctterm"), // 追加: 学期
-      day: getDayVal("ctl00_phContents_ddl_day"), // 追加: 曜日
-      time: getSelectVal("ctl00_phContents_ddl_time"),
-      sort: getSelectVal("ctl00_phContents_ddl_sbj_sort"), // 追加: 科目種別
-      sbj: getVal("ctl00_phContents_txt_sbj_Search"), // 追加: 科目名
-      staff: getVal("ctl00_phContents_txt_staff_Search"), // 追加: 教員名
-      keyword: getVal("ctl00_phContents_txt_keyword_Search"), // 追加: キーワード
-      all: getVal("ctl00_phContents_txt_all_Search"), // 追加: 全文検索
-      experience: getSelectVal("ctl00_phContents_ddl_experience"), // 追加: 実務経験
-      langCode: getSelectVal("ctl00_phContents_ddl_lang"), // 追加: 言語コード
-      method: getSelectVal("ctl00_phContents_ddl_lct_do_type"), // 追加: 授業実施方式
-      sdgs: checkedSdgs // 追加: SDGs
-    }))
+    setInputState({
+      year: DOM.search.getYearSelect()?.value || "",
+      org: DOM.search.getOrgSelect()?.value || "NULL",
+      faculty: DOM.search.getFacultySelect()?.value || "NULL",
+      grad: DOM.search.getGradSelect()?.value || "NULL",
+      term: DOM.search.getTermSelect()?.value || "NULL",
+      day: DOM.search.getDaySelect()?.value || "-1",
+      time: DOM.search.getTimeSelect()?.value || "NULL",
+      sort: DOM.search.getSortSelect()?.value || "NULL",
+      sbj: DOM.search.getSbjInput()?.value || "",
+      staff: DOM.search.getStaffInput()?.value || "",
+      keyword: DOM.search.getKeywordInput()?.value || "",
+      all: DOM.search.getAllInput()?.value || "",
+      experience: DOM.search.getExpSelect()?.value || "NULL",
+      langCode: DOM.search.getLangSelect()?.value || "NULL",
+      method: DOM.search.getMethodSelect()?.value || "NULL",
+      sdgs: []
+    })
   }
 
   const groupedFaculties = useMemo(() => {
-    const items = options.faculties.filter((f) => f.value !== "NULL")
-    // 🌟 見出しテキストを言語に応じて切り替え、依存配列に lang を追加
+    const items = options.faculties.filter((f: any) => f.value !== "NULL")
     return [{ label: UI_LANG[lang].facultyLabel, items }]
   }, [options.faculties, lang])
 
   const handleOrgChange = (val: string) => {
     const isLawSchool = val === "05"
-    setInputState((prev) => ({
-      ...prev,
-      org: val,
-      faculty: isLawSchool ? "15" : "NULL"
-    }))
+    const facultyValue = isLawSchool ? "15" : "NULL"
+    setInputState((prev) => ({ ...prev, org: val, faculty: facultyValue }))
     if (errors.org) setErrors((prev) => ({ ...prev, org: false }))
 
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const ddlOrg = document.getElementById(
-      "ctl00_phContents_ddl_org"
-    ) as HTMLSelectElement
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
+    const ddlOrg = DOM.search.getOrgSelect()
+    const ddlFaculty = DOM.search.getFacultySelect()
 
     if (form && eventTarget && ddlOrg) {
       ddlOrg.value = val
+      if (ddlFaculty) ddlFaculty.value = facultyValue
       eventTarget.value = "ctl00$phContents$ddl_org"
-      form.submit() // CSPエラーにならないネイティブ送信
+      // 連打時の過剰POSTを防ぐ
+      submitDebounced(form)
+    }
+  }
+
+  const handleYearChange = (val: string) => {
+    setInputState((prev) => ({ ...prev, year: val }))
+    if (errors.year) setErrors((prev) => ({ ...prev, year: false }))
+
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
+    const ddlYear = DOM.search.getYearSelect()
+
+    if (form && eventTarget && ddlYear) {
+      ddlYear.value = val
+      eventTarget.value = "ctl00$phContents$ddl_year"
+      submitDebounced(form)
     }
   }
 
   const scrapeExhaustiveConditions = () => {
-    // 🌟 修正：ハードコードされた日本語を翻訳辞書連動へ変更
     const mapping = [
       { id: "ctl00_phContents_lbl_year", label: UI_LANG[lang].year },
       { id: "ctl00_phContents_lbl_org", label: UI_LANG[lang].org },
@@ -696,7 +634,11 @@ const App = () => {
     ]
     const conditions = mapping
       .map((m) => {
-        const el = document.getElementById(m.id) as HTMLElement | null
+        const el =
+          document.getElementById(m.id) ??
+          (document.querySelector(
+            `[id$="${m.id.replace("ctl00_phContents_", "")}"]`
+          ) as HTMLElement | null)
         const val = el?.textContent?.trim().replace(/\u00a0/g, "") || ""
         return { label: m.label, value: val || "指定なし" }
       })
@@ -704,74 +646,59 @@ const App = () => {
     setCurrentConditions(conditions)
   }
 
-  const scrapeResults = () => {
-    const table = document.getElementById(
-      "ctl00_phContents_ucGrid_grv"
-    ) as HTMLTableElement
+  const scrapeResults = async () => {
+    const table = DOM.search.getResultTable()
     if (!table) return
-    const allRows = Array.from(table.querySelectorAll("tr"))
 
+    const headers = Array.from(table.querySelectorAll("th")).map(
+      (th) => th.textContent?.trim() || ""
+    )
+
+    const headerMap = {
+      semester: headers.findIndex(
+        (h) => h.includes("期間") || h.includes("Semester")
+      ),
+      title: headers.findIndex((h) => h.includes("科目名")),
+      teacher: headers.findIndex((h) => h.includes("担当教員")),
+      time: headers.findIndex(
+        (h) => h.includes("曜日・時限") || h.includes("曜日時限")
+      ),
+      grad: headers.findIndex((h) => h.includes("対象年次"))
+    }
+    const allRows = Array.from(table.querySelectorAll("tr"))
     const resultRows = allRows.filter(
       (row) =>
-        row.querySelectorAll("td").length >= 5 &&
-        (row.textContent || "").trim() !== "" &&
-        !row.querySelector("table")
+        row.querySelectorAll("td").length >= 5 && !row.querySelector("table")
     )
+
     const data = resultRows.map((row) => {
       const cells = row.querySelectorAll("td")
-      // 🌟 修正：漢字・ひらがな・カタカナを判別して複数教員を正しくカンマ区切りで抽出する
-      const splitLang = (cell: HTMLTableCellElement) => {
-        const text = cell.innerHTML.replace(/<br\s*\/?>/gi, "\n")
-        const tempDiv = document.createElement("div")
-        tempDiv.innerHTML = text
-        const lines = (tempDiv.textContent || "")
-          .split("\n")
-          .map((p) => p.trim())
-          .filter((p) => p !== "")
 
-        const jaLines: string[] = []
-        const enLines: string[] = []
-
-        lines.forEach((line) => {
-          // 漢字・ひらがな・カタカナが含まれている場合は日本語の行と判定
-          if (/[\u3040-\u30FF\u4E00-\u9FFF]/.test(line)) {
-            jaLines.push(line)
-          } else {
-            enLines.push(line)
-          }
-        })
-
-        return {
-          // 🌟 変更: ", " ではなく "\n" で繋ぐ
-          ja: jaLines.join("\n") || "",
-          en: enLines.length > 0 ? enLines.join("\n") : jaLines.join("\n") || ""
-        }
-      }
-      const jpLink = cells[3].querySelector(".jp")?.getAttribute("href")
-      let enLink = cells[3].querySelector(".en")?.getAttribute("href")
+      const jpLink = cells[3]?.querySelector(".jp")?.getAttribute("href")
+      let enLink = cells[3]?.querySelector(".en")?.getAttribute("href")
       if (!enLink && jpLink) enLink = jpLink.replace("je_cd=1", "je_cd=2")
+
       return {
-        semester: splitLang(cells[1]),
-        title: splitLang(cells[2]),
-        teacher: splitLang(cells[4]),
-        time: splitLang(cells[5]),
-        grad: cells[6]?.textContent?.trim() || "",
+        semester: splitLang(cells[headerMap.semester]),
+        title: splitLang(cells[headerMap.title]),
+        teacher: splitLang(cells[headerMap.teacher]),
+        time: splitLang(cells[headerMap.time]),
+        grad: cells[headerMap.grad]?.textContent?.trim() || "",
         links: { jp: jpLink, en: enLink }
       }
     })
     setResults(data)
-    // 🌟 追加：時間割番号（lct_cd）をキーにした曜日時限のキャッシュを作成して保存
+
     const storage = new Storage({ area: "local" })
-    storage.get("timetable_cache").then((oldCache: any) => {
-      const newCache = { ...(oldCache || {}) }
-      data.forEach((item) => {
-        const match = item.links.jp?.match(/lct_cd=([^&]+)/)
-        if (match && match[1]) {
-          newCache[match[1]] = item.time // { ja: "...", en: "..." } を保存
-        }
-      })
-      storage.set("timetable_cache", newCache)
+    const newCacheEntries: Record<string, any> = {}
+    data.forEach((item) => {
+      const match = item.links.jp?.match(/lct_cd=([^&]+)/)
+      if (match && match[1]) {
+        newCacheEntries[match[1]] = item.time
+      }
     })
+    await cleanCache(storage, "timetable_cache", newCacheEntries)
+
     const pagerRow = allRows.find((row) =>
       row.querySelector("td[colspan] table")
     )
@@ -795,23 +722,15 @@ const App = () => {
 
   const handleLangChange = (targetLang: "ja" | "en") => {
     setLang(targetLang)
-
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
     if (form && eventTarget) {
-      // 学務システム裏側の言語切り替えボタンのポストバックを安全に実行
       eventTarget.value =
         targetLang === "ja" ? "ctl00$imgBtnJpnBtm" : "ctl00$imgBtnEngBtm"
-      form.submit()
+      submitDebounced(form)
     }
   }
 
-  // =================================================================
-  // 🌟 1. すべての条件をリセットする関数（開講年度は最新、それ以外は初期化）
-  // =================================================================
   const handleResetAll = () => {
     const defaultYear = options.years[0]?.value || "2026"
     setInputState({
@@ -832,16 +751,12 @@ const App = () => {
       method: "NULL",
       sdgs: []
     })
-    // エラー表示もまとめて綺麗に消す
     setErrors({ year: false, org: false, faculty: false })
   }
 
-  // =================================================================
-  // 🌟 2. 後半の条件のみをリセットする関数（キーワード、詳しく検索、SDGsを初期化）
-  // =================================================================
   const handleResetLower = () => {
     setInputState((prev) => ({
-      ...prev, // 基本条件と時間割条件（年度、課程、学部、年次、学期、曜日、時限）はそのまま残す
+      ...prev,
       sort: "NULL",
       sbj: "",
       staff: "",
@@ -854,100 +769,37 @@ const App = () => {
     }))
   }
 
-  // =================================================================
-  // 🌟 3. 開講年度がチップまたはセレクトボックスで変更されたときの処理
-  // =================================================================
-  const handleYearChange = (val: string) => {
-    setInputState((prev) => ({ ...prev, year: val }))
-    if (errors.year) setErrors((prev) => ({ ...prev, year: false }))
-
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const ddlYear = document.getElementById(
-      "ctl00_phContents_ddl_year"
-    ) as HTMLSelectElement
-
-    if (form && eventTarget && ddlYear) {
-      ddlYear.value = val
-      eventTarget.value = "ctl00$phContents$ddl_year"
-      form.submit() // ASP.NETのポストバックを安全にエミュレート
-    }
-  }
-
-  // =================================================================
-  // 🌟 4. 【手順3の完成形】シラバス検索ボタンが押されたときのバリデーション＆同期送信
-  // =================================================================
   const handleFinalSearch = () => {
-    // ① 未入力がないか必須項目をチェック
-    const newErrors = {
-      year: !inputState.year,
-      org: inputState.org === "NULL",
-      faculty: inputState.faculty === "NULL"
-    }
-
-    // ② どこか1つでもエラーがあれば処理を止めて上部にスクロール
-    if (newErrors.year || newErrors.org || newErrors.faculty) {
-      setErrors(newErrors)
-      window.scrollTo({ top: 0, behavior: "smooth" })
-      return
-    }
-
-    // ③ エラーがなければ状態をクリアして同期処理へ進む
-    setErrors({ year: false, org: false, faculty: false })
-
-    // 元画面の要素へ値を同期するヘルパー
-    const sync = (id: string, val: string) => {
-      const el = document.getElementById(id) as
-        | HTMLSelectElement
-        | HTMLInputElement
+    const state = inputStateRef.current
+    const sync = (
+      el: HTMLInputElement | HTMLSelectElement | null,
+      val: string
+    ) => {
       if (el) el.value = val
     }
 
-    // 各入力値を学務システム本来のフォーム要素へ同期
-    sync("ctl00_phContents_ddl_year", inputState.year)
-    sync("ctl00_phContents_ddl_org", inputState.org)
-    sync("ctl00_phContents_ddl_fac", inputState.faculty)
-    sync("ctl00_phContents_ddl_grad", inputState.grad)
-    sync("ctl00_phContents_ddl_lctterm", inputState.term)
-    sync("ctl00_phContents_ddl_day", inputState.day)
-    sync("ctl00_phContents_ddl_time", inputState.time)
-    sync("ctl00_phContents_ddl_sbj_sort", inputState.sort)
-    sync("ctl00_phContents_txt_sbj_Search", inputState.sbj)
-    sync("ctl00_phContents_txt_staff_Search", inputState.staff)
-    sync("ctl00_phContents_txt_keyword_Search", inputState.keyword)
-    sync("ctl00_phContents_txt_all_Search", inputState.all)
-    sync("ctl00_phContents_ddl_experience", inputState.experience)
-    sync("ctl00_phContents_ddl_lang", inputState.langCode)
-    sync("ctl00_phContents_ddl_lct_do_type", inputState.method)
+    sync(DOM.search.getYearSelect(), state.year)
+    sync(DOM.search.getOrgSelect(), state.org)
+    sync(DOM.search.getFacultySelect(), state.faculty)
+    sync(DOM.search.getGradSelect(), state.grad)
+    sync(DOM.search.getTermSelect(), state.term)
+    sync(DOM.search.getDaySelect(), state.day)
+    sync(DOM.search.getTimeSelect(), state.time)
+    sync(DOM.search.getSortSelect(), state.sort)
+    sync(DOM.search.getSbjInput(), state.sbj)
+    sync(DOM.search.getStaffInput(), state.staff)
+    sync(DOM.search.getKeywordInput(), state.keyword)
+    sync(DOM.search.getAllInput(), state.all)
+    sync(DOM.search.getExpSelect(), state.experience)
+    sync(DOM.search.getLangSelect(), state.langCode)
+    sync(DOM.search.getMethodSelect(), state.method)
 
-    // SDGsのチェックボックス要素を同期
-    const allSdgsCbs = document.querySelectorAll(
-      'input[type="checkbox"][name*="cblSDGs"]'
-    )
-    allSdgsCbs.forEach((cb: HTMLInputElement) => (cb.checked = false))
-    inputState.sdgs.forEach((val) => {
-      const target = document.querySelector(
-        `input[id$="cblSDGs_${parseInt(val) - 1}"]`
-      ) as HTMLInputElement
-      if (target) target.checked = true
-    })
-
-    // 💡 学務システム本来の「検索」ボタンをプログラムでクリック
-    const btn = document.getElementById(
-      "ctl00_phContents_ctl16_btnSearch"
-    ) as HTMLElement
-    if (btn) btn.click()
+    DOM.search.getSearchBtn()?.click()
   }
 
-  // 💡 【修正】戻るボタンのCSPエラー対策
   const handleBackToSearch = () => {
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
     if (form && eventTarget) {
       eventTarget.value = "ctl00$phContents$lnkReturn_Up$lnk"
       form.submit()
@@ -956,31 +808,43 @@ const App = () => {
     }
   }
 
-  // 💡 【修正】ページネーションのCSPエラー対策
   const handlePageClick = (pageText: string) => {
-    const pagerTable = document.querySelector(
-      "#ctl00_phContents_ucGrid_grv tr td[colspan] table"
-    )
+    const isValidPage =
+      /^\d+$/.test(pageText) ||
+      ["次へ", "前へ", "Next", "Prev", "..."].includes(pageText)
+    if (!isValidPage) {
+      console.warn("Invalid page input blocked:", pageText)
+      return
+    }
+
+    const pagerTable = DOM.getPagerTable()
     if (!pagerTable) return
 
     const links = Array.from(pagerTable.querySelectorAll("a"))
     const targetLink = links.find((a) => a.textContent?.trim() === pageText)
 
-    const form = document.getElementById("aspnetForm") as HTMLFormElement
-    const eventTarget = document.getElementById(
-      "__EVENTTARGET"
-    ) as HTMLInputElement
-    const eventArgument = document.getElementById(
-      "__EVENTARGUMENT"
-    ) as HTMLInputElement
+    const form = DOM.form()
+    const eventTarget = DOM.getEventTarget()
+    const eventArgument = DOM.getEventArgument()
 
     if (form && eventTarget && eventArgument) {
       if (targetLink) {
         const href = targetLink.getAttribute("href") || ""
         const match = href.match(/__doPostBack\('(.*?)','(.*?)'\)/)
         if (match) {
-          eventTarget.value = match[1]
-          eventArgument.value = match[2]
+          const target = match[1]
+          const arg = match[2]
+
+          if (
+            !ALLOWED_TARGETS.includes(target) &&
+            target !== "ctl00$phContents$ucGrid$grv"
+          ) {
+            console.warn("Unauthorized postback target blocked:", target)
+            return
+          }
+
+          eventTarget.value = target
+          eventArgument.value = arg
           form.submit()
           return
         }
@@ -992,11 +856,10 @@ const App = () => {
   }
 
   const nextPageText = useMemo(() => {
-    const currentIndex = pages.findIndex((p) => p.isCurrent)
-    if (currentIndex !== -1 && currentIndex < pages.length - 1) {
-      return pages[currentIndex + 1].text
-    }
-    return null
+    const nextBtn = pages.find(
+      (p) => p.text.includes("次へ") || p.text.includes("Next")
+    )
+    return nextBtn ? nextBtn.text : null
   }, [pages])
 
   if (view === "loading" || view === "original") return null
@@ -1009,7 +872,6 @@ const App = () => {
             <div className="header-left">
               <h1>北海道大学シラバス検索システム</h1>
               <div className="lang-toggle">
-                {/* 🌟 onClick を handleLangChange に変更 */}
                 <button
                   className={`lang-btn ${lang === "ja" ? "active" : ""}`}
                   onClick={() => handleLangChange("ja")}>
@@ -1034,7 +896,6 @@ const App = () => {
       <main className="container">
         {view === "search" && (
           <div className="form-card">
-            {/* 🌟 基本条件ヘッダー */}
             <div
               style={{
                 display: "flex",
@@ -1050,14 +911,13 @@ const App = () => {
               </button>
             </div>
 
-            {/* 🌟 開講年度 */}
             <div className={`input-group ${errors.year ? "has-error" : ""}`}>
               <label className="input-label">
                 {UI_LANG[lang].year}{" "}
                 <span className="required-badge">{UI_LANG[lang].required}</span>
               </label>
               <div className="chip-group">
-                {options.years.slice(0, 3).map((y) => (
+                {options.years.slice(0, 3).map((y: any) => (
                   <div
                     key={y.value}
                     className={`chip ${inputState.year === y.value ? "active" : ""}`}
@@ -1070,7 +930,7 @@ const App = () => {
                   value={
                     options.years
                       .slice(3)
-                      .some((y) => y.value === inputState.year)
+                      .some((y: any) => y.value === inputState.year)
                       ? inputState.year
                       : ""
                   }
@@ -1078,7 +938,7 @@ const App = () => {
                   <option value="" disabled hidden>
                     {UI_LANG[lang].pastYear}
                   </option>
-                  {options.years.slice(3).map((y) => (
+                  {options.years.slice(3).map((y: any) => (
                     <option key={y.value} value={y.value}>
                       {y.text}
                     </option>
@@ -1090,14 +950,13 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 課程区分 */}
             <div className={`input-group ${errors.org ? "has-error" : ""}`}>
               <label className="input-label">
                 {UI_LANG[lang].org}{" "}
                 <span className="required-badge">{UI_LANG[lang].required}</span>
               </label>
               <div className="chip-group">
-                {options.orgs.map((o) => (
+                {options.orgs.map((o: any) => (
                   <div
                     key={o.value}
                     className={`chip ${inputState.org === o.value ? "active" : ""}`}
@@ -1111,7 +970,6 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 開講学部 */}
             <div className={`input-group ${errors.faculty ? "has-error" : ""}`}>
               <label className="input-label">
                 {UI_LANG[lang].faculty}{" "}
@@ -1122,7 +980,7 @@ const App = () => {
                   <div key={group.label} className="faculty-group">
                     <div className="faculty-group-label">{group.label}</div>
                     <div className="chip-group">
-                      {group.items.map((f) => (
+                      {group.items.map((f: any) => (
                         <div
                           key={f.value}
                           className={`chip ${inputState.faculty === f.value ? "active" : ""}`}
@@ -1143,7 +1001,6 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 時間割条件 */}
             <div className="section-title" style={{ marginTop: "40px" }}>
               {UI_LANG[lang].timetableConditions}
             </div>
@@ -1153,11 +1010,10 @@ const App = () => {
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gap: "24px"
               }}>
-              {/* 対象年次 */}
               <div className="input-group">
                 <label className="input-label">{UI_LANG[lang].grad}</label>
                 <div className="chip-group">
-                  {options.grads.map((g) => (
+                  {options.grads.map((g: any) => (
                     <div
                       key={g.value}
                       className={`chip ${inputState.grad === g.value ? "active" : ""}`}
@@ -1173,11 +1029,10 @@ const App = () => {
                 </div>
               </div>
 
-              {/* 開講学期 */}
               <div className="input-group">
                 <label className="input-label">{UI_LANG[lang].term}</label>
                 <div className="chip-group">
-                  {options.terms.map((t) => (
+                  {options.terms.map((t: any) => (
                     <div
                       key={t.value}
                       className={`chip ${inputState.term === t.value ? "active" : ""}`}
@@ -1190,11 +1045,10 @@ const App = () => {
                 </div>
               </div>
 
-              {/* 開講曜日 */}
               <div className="input-group">
                 <label className="input-label">{UI_LANG[lang].day}</label>
                 <div className="chip-group">
-                  {options.days.map((d) => (
+                  {options.days.map((d: any) => (
                     <div
                       key={d.value}
                       className={`chip ${inputState.day === d.value ? "active" : ""}`}
@@ -1210,11 +1064,10 @@ const App = () => {
                 </div>
               </div>
 
-              {/* 開講時限 */}
               <div className="input-group">
                 <label className="input-label">{UI_LANG[lang].time}</label>
                 <div className="chip-group">
-                  {options.times.map((t) => (
+                  {options.times.map((t: any) => (
                     <div
                       key={t.value}
                       className={`chip ${inputState.time === t.value ? "active" : ""}`}
@@ -1231,7 +1084,6 @@ const App = () => {
               </div>
             </div>
 
-            {/* 🌟 キーワード条件ヘッダー */}
             <div
               style={{
                 display: "flex",
@@ -1289,7 +1141,6 @@ const App = () => {
               </div>
             </div>
 
-            {/* 🌟 詳しく検索（アコーディオン） */}
             <div className="section-title" style={{ marginTop: "40px" }}>
               {UI_LANG[lang].advancedTitle}
             </div>
@@ -1361,7 +1212,7 @@ const App = () => {
                         onChange={(e) =>
                           setInputState({ ...inputState, sort: e.target.value })
                         }>
-                        {options.sorts.map((s) => (
+                        {options.sorts.map((s: any) => (
                           <option key={s.value} value={s.value}>
                             {s.text}
                           </option>
@@ -1380,7 +1231,7 @@ const App = () => {
                             langCode: e.target.value
                           })
                         }>
-                        {options.langs.map((l) => (
+                        {options.langs.map((l: any) => (
                           <option key={l.value} value={l.value}>
                             {l.text}
                           </option>
@@ -1399,7 +1250,7 @@ const App = () => {
                             method: e.target.value
                           })
                         }>
-                        {options.methods.map((m) => (
+                        {options.methods.map((m: any) => (
                           <option key={m.value} value={m.value}>
                             {m.text}
                           </option>
@@ -1411,7 +1262,6 @@ const App = () => {
               )}
             </div>
 
-            {/* 🌟 SDGs 条件（アコーディオン） */}
             <div className="section-title" style={{ marginTop: "40px" }}>
               {UI_LANG[lang].sdgsTitle}
             </div>
@@ -1425,7 +1275,6 @@ const App = () => {
               {showSdgs && (
                 <div className="accordion-content">
                   <div className="sdgs-list">
-                    {/* 🌟 1. SDGsのラベル表示を言語に応じて切り替え */}
                     {SDGS_LABELS[lang].map((label, i) => (
                       <label key={i + 1} className="sdgs-item">
                         <input
@@ -1450,12 +1299,11 @@ const App = () => {
             </div>
 
             <button className="btn-submit" onClick={handleFinalSearch}>
-              シラバスを検索する
+              {UI_LANG[lang].submitBtn}
             </button>
           </div>
         )}
 
-        {/* 🌟 2. 検索結果一覧画面の多言語化 ＆ テーブル列ズレ大修正 */}
         {view === "list" && (
           <div>
             <div
@@ -1523,17 +1371,14 @@ const App = () => {
                         {item.semester[lang]}
                       </span>
                     </td>
-
                     <td>
                       <span style={{ fontSize: "0.85rem", fontWeight: "bold" }}>
                         {item.grad}
                       </span>
                     </td>
-
                     <td style={{ fontWeight: "800", lineHeight: "1.4" }}>
                       {item.title[lang]}
                     </td>
-
                     <td>
                       <span
                         style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
@@ -1546,12 +1391,10 @@ const App = () => {
                         {item.time[lang]}
                       </span>
                     </td>
-                    {/* 💡 ズレの原因だった重複 td を削除し、ヘッダーと綺麗に整列させました */}
                     <td>
                       <div style={{ display: "flex", gap: "4px" }}>
                         {item.links.jp && (
                           <a
-                            // 🌟 修正：リンク先に ?lang=ja を付与
                             href={item.links.jp + "&lang=ja"}
                             target="_blank"
                             className="btn-action btn-jp">
@@ -1560,7 +1403,6 @@ const App = () => {
                         )}
                         {item.links.en && (
                           <a
-                            // 🌟 修正：リンク先に ?lang=en を付与
                             href={item.links.en + "&lang=en"}
                             target="_blank"
                             className="btn-action btn-en">
@@ -1590,7 +1432,6 @@ const App = () => {
               </tbody>
             </table>
 
-            {/* ページネーション */}
             {pages.length > 0 && (
               <div className="pagination-container">
                 {pages.map((p, i) => (
