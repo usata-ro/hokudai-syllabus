@@ -5,6 +5,7 @@ import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { DOM } from "~lib/domAdapter" // アダプターをインポート
+import { splitLang } from "~lib/utils"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -693,15 +694,15 @@ const linkify = (text: string) => {
 
 // 4. メインのUIコンポーネント
 const SyllabusModernUI = () => {
-  // 💡 ポップアップと同じキー名（"isDetailActive"）を指定して設定を読み込み
   const [isDetailActive] = useStorage("isDetailActive", true)
   const [tableData, setTableData] = useState<TableRow[]>([])
   const [lang, setLang] = useState<"ja" | "en">("ja")
-  // 🌟 修正：不具合の起きやすい useStorage フックを削除し、確実な useState を用意
   const [timeData, setTimeData] = useState<any>(null)
 
   useEffect(() => {
-    // 🌟 修正：URLとHTML画面の両方から時間割番号を探し、直接ストレージを読み込む
+    const form = DOM.form()
+    if (form) form.style.visibility = "hidden"
+
     const lctCdEl = DOM.detail.getLctCd()
     const params = new URLSearchParams(window.location.search)
     const urlCd = params.get("lct_cd")
@@ -738,17 +739,15 @@ const SyllabusModernUI = () => {
     document.body.style.backgroundColor = "#ffffff"
 
     const extracted = targetDataList.map((item) => {
-      // item.id は "ctl00_phContents_..." で始まっていますが、
-      // 変換ロジックを DOM.detail.getElement に統合します
-      let text = extractTextWithLinks(
-        DOM.detail.getElement(item.id.replace("ctl00_phContents_", ""))
-      )
+      const el = DOM.detail.getElement(item.id.replace("ctl00_phContents_", ""))
+      let text = extractTextWithLinks(el)
 
       if (item.fallbackIds) {
         item.fallbackIds.forEach((fid) => {
-          const fallbackText = extractTextWithLinks(
-            DOM.detail.getElement(fid.replace("ctl00_phContents_", ""))
+          const fallbackEl = DOM.detail.getElement(
+            fid.replace("ctl00_phContents_", "")
           )
+          const fallbackText = extractTextWithLinks(fallbackEl)
           if (fallbackText) text += (text ? "\n\n" : "") + fallbackText
         })
       }
@@ -776,9 +775,11 @@ const SyllabusModernUI = () => {
       }
     })
     setTableData(extracted)
+    return () => {
+      if (form) form.style.visibility = "visible"
+    }
   }, [isDetailActive])
 
-  // 💡 設定がOFFなら、新しいUIをレンダリングしない
   if (isDetailActive === false || tableData.length === 0) return null
 
   // --- iNAZO検索用のクエリを取得する処理 ---

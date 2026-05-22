@@ -5,6 +5,7 @@ import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { DOM } from "~lib/domAdapter"
+import { cleanCache, isJapaneseText, splitLang } from "~lib/utils"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -535,6 +536,13 @@ const App = () => {
     const pnlSearch = DOM.search.pnlSearch()
     const pnlList = DOM.search.pnlList()
     const form = DOM.form()
+    form.style.visibility = "hidden"
+
+    if (pnlSearch) {
+      form.style.position = "absolute"
+    }
+
+    form.style.visibility = "visible"
 
     if (pnlSearch) {
       setView("search")
