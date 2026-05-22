@@ -1,10 +1,12 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useState } from "react"
+import regularFont from "url:~assets/fonts/GenInterfaceJP-Regular.ttf"
+import boldFont from "url:~assets/fonts/GenInterfaceJPDisplay-Bold.ttf"
 
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
-import { DOM } from "~lib/domAdapter" // アダプターをインポート
+import { DOM } from "~lib/domAdapter"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -14,10 +16,22 @@ export const config: PlasmoCSConfig = {
 
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
+
+  // インポートした変数をそのままCSSに埋め込みます
   style.textContent = `
-    /* 指定されたWebフォントの読み込み */
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/400.css');
-    @import url('https://cdn.jsdelivr.net/npm/gen-interface-jp@latest/cdn/display-800.css');
+    @font-face {
+      font-family: 'Gen Interface JP';
+      src: url('${regularFont}') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Gen Interface JP Display';
+      src: url('${boldFont}') format('truetype');
+      font-weight: 800;
+      font-style: normal;
+    }
 
     :host {
       --text-color: #001C0C;
@@ -642,34 +656,41 @@ type TableRow = {
   fullWidth: boolean
 }
 
+// 🌟 12. innerHTMLを使わない安全なテキスト抽出への修正
 const extractTextWithLinks = (el: HTMLElement | null): string => {
   if (!el) return ""
 
-  let html = el.innerHTML
-  html = html.replace(/<br\s*\/?>/gi, "\n")
-  html = html.replace(/<\/span>/gi, "</span>\n")
-  html = html.replace(/<\/p>/gi, "</p>\n")
-  html = html.replace(/<\/div>/gi, "</div>\n")
-
-  const tempDiv = document.createElement("div")
-  tempDiv.innerHTML = html
-
-  const links = tempDiv.querySelectorAll("a")
-  links.forEach((a) => {
-    const url = a.href
-    if (url && url.startsWith("http") && a.textContent?.trim() !== url) {
-      a.textContent = `${a.textContent?.trim()}\n${url}\n`
+  let text = ""
+  el.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent
+    } else if (
+      node.nodeName.toLowerCase() === "br" ||
+      node.nodeName.toLowerCase() === "p" ||
+      node.nodeName.toLowerCase() === "div"
+    ) {
+      text += "\n"
+    } else if (node.nodeName.toLowerCase() === "a") {
+      const a = node as HTMLAnchorElement
+      const url = a.href
+      if (url && url.startsWith("http") && a.textContent?.trim() !== url) {
+        text += `${a.textContent?.trim()}\n${url}\n`
+      } else {
+        text += a.textContent
+      }
+    } else if (node.nodeName.toLowerCase() === "span") {
+      text += node.textContent + "\n"
+    } else {
+      text += node.textContent
     }
   })
 
-  let text = tempDiv.textContent || ""
-  text = text
+  return text
     .split("\n")
     .map((line) => line.trim())
     .join("\n")
-  text = text.replace(/\n{3,}/g, "\n\n").trim()
-
-  return text
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
 }
 
 const linkify = (text: string) => {
@@ -710,7 +731,7 @@ const SyllabusModernUI = () => {
         form.style.visibility = "visible"
         form.style.position = ""
         form.style.left = ""
-        form.style.display = "" // 古い display: none が残っていた場合の保険
+        form.style.display = ""
       }
       document.body.style.overflow = "auto"
       document.body.style.minWidth = "0"
