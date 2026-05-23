@@ -71,7 +71,7 @@
 
 ## 🚀 使い方
 
-詳細なインストール方法や利用手順は、[こちら（Releasesページ）](https://github.com/usata-ro/hokudai-syllabus/releases)を参照してください。
+詳細なインストール方法や利用手順は、[こちら（Releasesページ）](https://chromewebstore.google.com/detail/okaeri-syllabus-in-hokuda/bgihpefkaacjgjjoehbiiekkmkcidacp?authuser=0&hl=ja)を参照してください。
 
 ## 🤝 開発への協力
 
