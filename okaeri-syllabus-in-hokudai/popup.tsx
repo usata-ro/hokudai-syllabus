@@ -163,6 +163,32 @@ const IndexPopup = () => {
           </div>
         ))}
 
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "12px",
+            backgroundColor: "#f0f7f1",
+            borderRadius: "10px",
+            textAlign: "center"
+          }}>
+          <a
+            href="https://hokudai-syllabus-redirect.usata-ro.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: "0.8rem",
+              color: "#166524",
+              textDecoration: "none",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}>
+            Hokudai Syllabus Redirect System{" "}
+          </a>
+        </div>
+
         {/* GitHubリンク */}
         <div
           style={{
@@ -208,7 +234,7 @@ const IndexPopup = () => {
             color: "#999",
             lineHeight: "1.5"
           }}>
-          Version 2.0.1 | Okaeri Syllabus in Hokudai
+          Version 2.0.2 | Okaeri Syllabus in Hokudai
         </div>
       </div>
     </div>
