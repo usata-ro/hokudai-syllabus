@@ -1,7 +1,7 @@
 {
   "name": "okaeri-syllabus-in-hokudai",
   "displayName": "Okaeri syllabus in hokudai",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "北海道大学のシラバスをモダンなUIに変更します。読み込みにバグがあるかもしれません。拡張機能の使用は参考までにとどめ、元のページも必ず参照し、自己責任で使用してください。",
   "author": "usata",
   "scripts": {

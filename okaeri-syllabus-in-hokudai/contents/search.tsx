@@ -43,18 +43,114 @@ export const getStyle: PlasmoGetStyle = () => {
       font-weight: 800;
       font-style: normal;
     }
- 
+
     :host {
+      /* 基本カラー */
       --text-color: #001C0C;
+      --text-secondary: #444444;
+      --text-muted: #888888;
+      --text-on-main: #ffffff;
       --main-color: #1F8C32;
       --accent-color: #89bf80;
       --bg-color: #f0f4f1;
-      --table-th-bg: #f5faf6;
-      --border-color: #d1e6d5;
+      --card-bg: #ffffff;
+      --input-bg: #ffffff;
+      
+      /* ヘッダー関連 */
       --header-text: #ffffff;
+      --header-bg-start: #4CAF50;
+      --header-bg-mid: #1F8C32;
+      --header-bg-end: #166524;
+      --lang-bg: rgba(255, 255, 255, 0.2);
+      --lang-border: rgba(255, 255, 255, 0.4);
+      --lang-active-bg: #ffffff;
+      --lang-active-text: #1F8C32;
+      
+      /* コンポーネント関連 (チップ、アコーディオンなど) */
+      --item-bg: #f8faf9;
+      --item-hover-bg: #f0f7f1;
+      --item-border: #e0e8e1;
+      --faculty-bg: #f9fcf9;
+      --faculty-border: #e8f0e8;
+      
+      /* テーブル関連 */
+      --table-th-bg: #f5faf6;
+      --table-border: #f0f0f0;
+      --border-color: #d1e6d5;
+      
+      /* ボタン・バッジ関連 */
       --inazo-color: #006085;
+      --btn-en-bg: #666666;
+      --btn-back-border: #cccccc;
+      --btn-back-hover: #f9f9f9;
+      
+      /* エラー状態 */
+      --error-color: #e53935;
+      --error-bg: #fff8f8;
+      --error-border: #ffcdd2;
+      --error-text: #d32f2f;
+      
+      /* シャドウ */
+      --shadow-sm: rgba(0, 28, 12, 0.06);
+      --shadow-md: rgba(31, 140, 50, 0.2);
+      --shadow-lg: rgba(31, 140, 50, 0.25);
+
       display: block;
       width: 100%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :host {
+        /* 基本カラー (ダーク) */
+        --text-color: #e6f2ec;
+        --text-secondary: #b0beb5;
+        --text-muted: #808b94;
+        --text-on-main: #ffffff;
+        --main-color: #2eb845;
+        --accent-color: #4a7543;
+        --bg-color: #0d1a12;
+        --card-bg: #152419;
+        --input-bg: #121f15;
+        
+        /* ヘッダー関連 (ダーク) */
+        --header-text: #e6f2ec;
+        --header-bg-start: #1b4d24;
+        --header-bg-mid: #103816;
+        --header-bg-end: #09210c;
+        --lang-bg: rgba(0, 0, 0, 0.3);
+        --lang-border: rgba(255, 255, 255, 0.2);
+        --lang-active-bg: #2eb845;
+        --lang-active-text: #ffffff;
+        
+        /* コンポーネント関連 (ダーク) */
+        --item-bg: #1a2e20;
+        --item-hover-bg: #213d2a;
+        --item-border: #2c4a35;
+        --faculty-bg: #18291c;
+        --faculty-border: #233d28;
+        
+        /* テーブル関連 (ダーク) */
+        --table-th-bg: #152b1d;
+        --table-border: #2c4a35;
+        --border-color: #21402b;
+        
+        /* ボタン・バッジ関連 (ダーク) */
+        --inazo-color: #3bb3e0; /* 見やすいように調整 */
+        --btn-en-bg: #555555;
+        --btn-back-border: #444444;
+        --btn-back-hover: #1f3325;
+        
+        /* エラー状態 (ダーク) */
+        --error-color: #ef5350;
+        --error-bg: #3d1c1c;
+        --error-border: #7a2b2b;
+        --error-text: #ff8a80;
+        
+        /* シャドウ (ダーク) */
+        --shadow-sm: rgba(0, 0, 0, 0.4);
+        --shadow-md: rgba(46, 184, 69, 0.15);
+        --shadow-lg: rgba(46, 184, 69, 0.2);
+      }
     }
 
     .modern-wrapper {
@@ -80,12 +176,12 @@ export const getStyle: PlasmoGetStyle = () => {
       display: flex;
       flex-direction: column;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(31, 140, 50, 0.2);
+      box-shadow: 0 4px 12px var(--shadow-md);
     }
 
     .modern-header-bg {
       width: 100%;
-      background: linear-gradient(135deg, #4CAF50 0%, #1F8C32 50%, #166524 100%);
+      background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-mid) 50%, var(--header-bg-end) 100%);
       display: flex;
       justify-content: center;
     }
@@ -93,7 +189,7 @@ export const getStyle: PlasmoGetStyle = () => {
     .modern-header {
       width: 1100px;
       padding: 12px 32px;
-      color: white;
+      color: var(--header-text);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -101,7 +197,7 @@ export const getStyle: PlasmoGetStyle = () => {
     }
 
     .header-left { display: flex; align-items: center; gap: 24px; }
-    .modern-header h1 { font-family: "Gen Interface JP Display", sans-serif; font-weight: 800; margin: 0; font-size: 1.35rem; letter-spacing: 0.05em; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    .modern-header h1 { font-family: "Gen Interface JP Display", sans-serif; font-weight: 800; margin: 0; font-size: 1.35rem; letter-spacing: 0.05em; color: var(--header-text); text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
     .header-sub-nav {
       display: flex;
@@ -123,25 +219,26 @@ export const getStyle: PlasmoGetStyle = () => {
       text-underline-offset: 4px;
     }
 
-    .lang-toggle { display: inline-flex; background-color: rgba(255, 255, 255, 0.2); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.4); }
-    .lang-btn { background: transparent; border: none; color: white; padding: 6px 14px; font-family: inherit; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; }
-    .lang-btn.active { background-color: white; color: var(--main-color); }
+    .lang-toggle { display: inline-flex; background-color: var(--lang-bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--lang-border); }
+    .lang-btn { background: transparent; border: none; color: var(--header-text); padding: 6px 14px; font-family: inherit; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; }
+    .lang-btn.active { background-color: var(--lang-active-bg); color: var(--lang-active-text); }
 
     .container { width: 1100px; padding: 40px 32px; box-sizing: border-box; display: flex; flex-direction: column; }
 
-    .form-card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 8px 24px rgba(0,28,12,0.06); border: 1px solid var(--border-color); }
+    .form-card { background: var(--card-bg); border-radius: 16px; padding: 32px; box-shadow: 0 8px 24px var(--shadow-sm); border: 1px solid var(--border-color); }
     .section-title { font-size: 1.25rem; font-weight: 800; color: var(--main-color); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
     .section-title::before { content: ""; width: 4px; height: 1.2em; background: var(--main-color); border-radius: 2px; }
 
     .input-group { margin-bottom: 24px; }
-    .input-label { font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: block; color: #444; }
+    .input-label { font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: block; color: var(--text-secondary); }
 
     .chip-group { display: flex; flex-wrap: wrap; gap: 10px; }
     .chip {
       padding: 10px 20px;
       border-radius: 10px;
-      background: #f8faf9;
-      border: 1.5px solid #e0e8e1;
+      background: var(--item-bg);
+      border: 1.5px solid var(--item-border);
+      color: var(--text-color);
       cursor: pointer;
       font-size: 1rem;
       font-weight: bold;
@@ -150,12 +247,12 @@ export const getStyle: PlasmoGetStyle = () => {
       display: flex;
       align-items: center;
     }
-    .chip:hover { border-color: var(--main-color); background: #f0f7f1; }
-    .chip.active { background: var(--main-color); color: white; border-color: var(--main-color); box-shadow: 0 4px 10px rgba(31,140,50,0.2); }
+    .chip:hover { border-color: var(--main-color); background: var(--item-hover-bg); }
+    .chip.active { background: var(--main-color); color: var(--text-on-main); border-color: var(--main-color); box-shadow: 0 4px 10px var(--shadow-md); }
 
-    .faculty-container { display: flex; flex-direction: column; gap: 16px; background: #f9fcf9; padding: 24px; border-radius: 12px; border: 1px solid #e8f0e8; }
+    .faculty-container { display: flex; flex-direction: column; gap: 16px; background: var(--faculty-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--faculty-border); }
     .faculty-group { display: flex; flex-direction: column; gap: 8px; }
-    .faculty-group-label { font-size: 0.85rem; font-weight: 800; color: #666; border-left: 4px solid var(--accent-color); padding-left: 8px; }
+    .faculty-group-label { font-size: 0.85rem; font-weight: 800; color: var(--text-secondary); border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
     select, input[type="text"] { 
       width: 100%; 
@@ -167,12 +264,13 @@ export const getStyle: PlasmoGetStyle = () => {
       outline: none; 
       box-sizing: border-box; 
       transition: all 0.2s ease;
-      background-color: #fff;
+      background-color: var(--input-bg);
+      color: var(--text-color);
     }
     
     select:focus, input[type="text"]:focus { 
       border-color: var(--main-color); 
-      box-shadow: 0 0 0 3px rgba(31, 140, 50, 0.15);
+      box-shadow: 0 0 0 3px var(--shadow-md);
     }
 
     select::-ms-expand { display: none !important; }
@@ -182,7 +280,7 @@ export const getStyle: PlasmoGetStyle = () => {
       -moz-appearance: none !important;
       appearance: none !important;
       cursor: pointer;
-      background-color: #fff !important;
+      background-color: var(--input-bg) !important;
       background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjMUY4QzMyJyBzdHJva2Utd2lkdGg9JzIuNScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJz48cG9seWxpbmUgcG9pbnRzPSc2IDkgMTIgMTUgMTggOScvPjwvc3ZnPg==") !important;
       background-repeat: no-repeat !important;
       background-position: right 14px center !important;
@@ -190,33 +288,33 @@ export const getStyle: PlasmoGetStyle = () => {
       padding-right: 40px !important;
     }
     
-    select:hover { background-color: #f9fdfa; border-color: var(--accent-color); }
+    select:hover { background-color: var(--item-hover-bg) !important; border-color: var(--accent-color); }
     
-    .btn-submit { background: var(--main-color); color: white; border: none; padding: 20px 100px; font-size: 1.25rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 20px rgba(31, 140, 50, 0.25); display: block; margin: 40px auto 0; }
-    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(31, 140, 50, 0.35); filter: brightness(1.1); }
+    .btn-submit { background: var(--main-color); color: var(--text-on-main); border: none; padding: 20px 100px; font-size: 1.25rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 20px var(--shadow-lg); display: block; margin: 40px auto 0; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 25px var(--shadow-lg); filter: brightness(1.1); }
 
-    .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #f8faf9; border: 1.5px solid var(--border-color); border-radius: 10px; cursor: pointer; font-weight: 800; transition: all 0.2s; margin-bottom: 4px; }
-    .accordion-header:hover { border-color: var(--main-color); background: #f0f7f1; }
-    .accordion-content { padding: 20px; background: #fff; border: 1.5px solid var(--border-color); border-top: none; border-radius: 0 0 12px 12px; margin-top: -4px; margin-bottom: 24px; }
+    .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--item-bg); border: 1.5px solid var(--border-color); border-radius: 10px; cursor: pointer; font-weight: 800; transition: all 0.2s; margin-bottom: 4px; }
+    .accordion-header:hover { border-color: var(--main-color); background: var(--item-hover-bg); }
+    .accordion-content { padding: 20px; background: var(--card-bg); border: 1.5px solid var(--border-color); border-top: none; border-radius: 0 0 12px 12px; margin-top: -4px; margin-bottom: 24px; }
 
     .sdgs-list { display: flex; flex-direction: column; gap: 6px; }
     .sdgs-item { display: flex; align-items: center; gap: 12px; font-size: 0.95rem; cursor: pointer; padding: 8px; border-radius: 8px; transition: background 0.2s; user-select: none; }
-    .sdgs-item:hover { background: #f0f7f1; }
+    .sdgs-item:hover { background: var(--item-hover-bg); }
     .sdgs-item input { width: 18px; height: 18px; accent-color: var(--main-color); cursor: pointer; }
 
     .conditions-summary { 
-      background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 0; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden;
+      background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 0; margin-bottom: 24px; box-shadow: 0 4px 12px var(--shadow-sm); overflow: hidden;
     }
-    .conditions-header { padding: 16px 24px; background: #f9faf9; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .conditions-header { padding: 16px 24px; background: var(--item-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .conditions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px; }
-    .condition-item { display: flex; flex-direction: column; border-bottom: 1px dashed #eee; padding-bottom: 6px; }
-    .condition-label { font-weight: bold; color: #888; margin-bottom: 2px; font-size: 0.85rem; }
+    .condition-item { display: flex; flex-direction: column; border-bottom: 1px dashed var(--item-border); padding-bottom: 6px; }
+    .condition-label { font-weight: bold; color: var(--text-muted); margin-bottom: 2px; font-size: 0.85rem; }
     .condition-val { font-weight: 800; color: var(--main-color); line-height: 1.2; font-size: 1rem; }
 
-    .result-table { width: 100%; border-collapse: separate; border-spacing: 0; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,28,12,0.04); border: 1px solid var(--border-color); table-layout: fixed; }
+    .result-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card-bg); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px var(--shadow-sm); border: 1px solid var(--border-color); table-layout: fixed; }
     .result-table th { background: var(--table-th-bg); color: var(--main-color); padding: 18px 12px; text-align: left; font-weight: 800; font-size: 0.9rem; border-bottom: 2px solid var(--border-color); }
-    .result-table td { padding: 16px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-size: 1rem; overflow-wrap: break-word; }
-    .result-table tr:hover td { background-color: #f9fdfa; }
+    .result-table td { padding: 16px 12px; border-bottom: 1px solid var(--table-border); vertical-align: middle; font-size: 1rem; overflow-wrap: break-word; }
+    .result-table tr:hover td { background-color: var(--item-hover-bg); }
 
     .col-term { width: 70px; }
     .col-title { width: 180px; }
@@ -227,29 +325,29 @@ export const getStyle: PlasmoGetStyle = () => {
     .col-grad { width: 50px; }
 
     .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 60px; }
-    .page-btn { min-width: 44px; height: 44px; border-radius: 12px; background: white; border: 2px solid var(--border-color); color: var(--main-color); font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
-    .page-btn:hover { border-color: var(--main-color); background: #f0f7f1; }
-    .page-btn.active { background: var(--main-color); color: white; border-color: var(--main-color); }
-    .page-btn.next-btn { padding: 0 24px; background: var(--main-color); color: white; }
+    .page-btn { min-width: 44px; height: 44px; border-radius: 12px; background: var(--card-bg); border: 2px solid var(--border-color); color: var(--main-color); font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
+    .page-btn:hover { border-color: var(--main-color); background: var(--item-hover-bg); }
+    .page-btn.active { background: var(--main-color); color: var(--text-on-main); border-color: var(--main-color); }
+    .page-btn.next-btn { padding: 0 24px; background: var(--main-color); color: var(--text-on-main); }
 
     .btn-action { text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid transparent; white-space: nowrap; transition: all 0.2s; }
-    .btn-jp { background: var(--main-color); color: white; }
-    .btn-en { background: #666; color: white; }
-    .btn-inazo-small { background: white; color: var(--inazo-color); border-color: var(--inazo-color); padding: 6px 14px; font-size: 0.85rem; }
-    .btn-inazo-small:hover { background: var(--inazo-color); color: white; }
+    .btn-jp { background: var(--main-color); color: var(--text-on-main); }
+    .btn-en { background: var(--btn-en-bg); color: var(--text-on-main); }
+    .btn-inazo-small { background: var(--card-bg); color: var(--inazo-color); border-color: var(--inazo-color); padding: 6px 14px; font-size: 0.85rem; }
+    .btn-inazo-small:hover { background: var(--inazo-color); color: var(--text-on-main); }
     .inazo-group { display: flex; flex-direction: row; gap: 10px; }
     
-    .btn-back-link { background: white; border: 1.5px solid #ccc; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: bold; color: #666; font-size: 1rem; transition: background 0.2s; }
-    .btn-back-link:hover { background: #f9f9f9; }
+    .btn-back-link { background: var(--card-bg); border: 1.5px solid var(--btn-back-border); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: bold; color: var(--text-secondary); font-size: 1rem; transition: background 0.2s; }
+    .btn-back-link:hover { background: var(--btn-back-hover); }
 
-    .required-badge { background-color: #e53935; color: white; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: bold; }
-    .error-text { color: #e53935; font-size: 0.9rem; font-weight: bold; margin-top: 8px; }
-    .has-error .chip { border-color: #ffcdd2; background-color: #fff8f8; color: #d32f2f; }
-    .has-error select { border-color: #e53935; background-color: #fff8f8; }
-    .has-error .faculty-container { border-color: #e53935; background-color: #fff8f8; }
+    .required-badge { background-color: var(--error-color); color: var(--text-on-main); font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: bold; }
+    .error-text { color: var(--error-color); font-size: 0.9rem; font-weight: bold; margin-top: 8px; }
+    .has-error .chip { border-color: var(--error-border); background-color: var(--error-bg); color: var(--error-text); }
+    .has-error select { border-color: var(--error-color); background-color: var(--error-bg); }
+    .has-error .faculty-container { border-color: var(--error-color); background-color: var(--error-bg); }
 
-    .btn-reset-text { background: #fff; color: #666; border: 1.5px solid #d1e6d5; padding: 6px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-    .btn-reset-text:hover { background: #fff8f8; color: #e53935; border-color: #ffcdd2; }
+    .btn-reset-text { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border-color); padding: 6px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .btn-reset-text:hover { background: var(--error-bg); color: var(--error-color); border-color: var(--error-border); }
   `
   return style
 }

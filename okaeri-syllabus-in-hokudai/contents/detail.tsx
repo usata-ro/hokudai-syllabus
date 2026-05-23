@@ -733,6 +733,9 @@ const SyllabusModernUI = () => {
         form.style.position = ""
         form.style.left = ""
         form.style.display = ""
+        form.style.top = ""
+        form.style.height = ""
+        form.style.overflow = ""
       }
       document.body.style.overflow = "auto"
       document.body.style.minWidth = "0"
@@ -744,6 +747,9 @@ const SyllabusModernUI = () => {
       form.style.visibility = "hidden"
       form.style.position = "absolute"
       form.style.left = "-99999px"
+      form.style.top = "0"
+      form.style.height = "0"
+      form.style.overflow = "hidden"
     }
     document.body.style.overflow = "auto"
     document.body.style.minWidth = "1100px"

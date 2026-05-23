@@ -208,7 +208,7 @@ const IndexPopup = () => {
             color: "#999",
             lineHeight: "1.5"
           }}>
-          Version 2.0.0 | Okaeri Syllabus in Hokudai
+          Version 2.0.1 | Okaeri Syllabus in Hokudai
         </div>
       </div>
     </div>
