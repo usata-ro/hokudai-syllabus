@@ -61,6 +61,7 @@ export const getStyle: PlasmoGetStyle = () => {
       min-width: 100vw;
       min-height: 100vh;
       z-index: 10000;
+      
       font-family: "Gen Interface JP", sans-serif;
       font-weight: 400;
       color: var(--text-color);
@@ -481,12 +482,24 @@ const App = () => {
       const pnlSearch = DOM.search.pnlSearch()
       const pnlList = DOM.search.pnlList()
 
+      if (isSearchActive || isSearchListActive) {
+        document.body.style.overflow = "auto"
+        document.body.style.minWidth = "1100px" // これが横スクロールの鍵
+        document.body.style.margin = "0"
+        document.body.style.padding = "0"
+        document.body.style.backgroundColor = "#f0f4f1"
+      }
+
       if (pnlSearch && isSearchActive) {
         setView("search")
         if (form) {
+          // 🌟 修正：高さを0にして元のフォームがページを押し下げるのを防ぐ
           form.style.visibility = "hidden"
           form.style.position = "absolute"
           form.style.left = "-99999px"
+          form.style.top = "0"
+          form.style.height = "0"
+          form.style.overflow = "hidden"
         }
         const engBtn = DOM.search.getEngBtn()
         setLang(engBtn?.getAttribute("disabled") === "disabled" ? "en" : "ja")
@@ -499,6 +512,9 @@ const App = () => {
           form.style.visibility = "hidden"
           form.style.position = "absolute"
           form.style.left = "-99999px"
+          form.style.top = "0"
+          form.style.height = "0"
+          form.style.overflow = "hidden"
         }
         observeDOM(document.body, () => {
           scrapeResults()
@@ -510,7 +526,15 @@ const App = () => {
           form.style.visibility = "visible"
           form.style.position = ""
           form.style.left = ""
+          form.style.top = ""
+          form.style.height = ""
+          form.style.overflow = ""
         }
+        document.body.style.overflow = ""
+        document.body.style.minWidth = ""
+        document.body.style.margin = ""
+        document.body.style.padding = ""
+        document.body.style.backgroundColor = ""
       }
     }
 
@@ -752,6 +776,27 @@ const App = () => {
       sdgs: []
     })
     setErrors({ year: false, org: false, faculty: false })
+    const sync = (
+      el: HTMLInputElement | HTMLSelectElement | null,
+      val: string
+    ) => {
+      if (el) el.value = val
+    }
+    sync(DOM.search.getYearSelect(), defaultYear)
+    sync(DOM.search.getOrgSelect(), "NULL")
+    sync(DOM.search.getFacultySelect(), "NULL")
+    sync(DOM.search.getGradSelect(), "NULL")
+    sync(DOM.search.getTermSelect(), "NULL")
+    sync(DOM.search.getDaySelect(), "-1")
+    sync(DOM.search.getTimeSelect(), "NULL")
+    sync(DOM.search.getSortSelect(), "NULL")
+    sync(DOM.search.getSbjInput(), "")
+    sync(DOM.search.getStaffInput(), "")
+    sync(DOM.search.getKeywordInput(), "")
+    sync(DOM.search.getAllInput(), "")
+    sync(DOM.search.getExpSelect(), "NULL")
+    sync(DOM.search.getLangSelect(), "NULL")
+    sync(DOM.search.getMethodSelect(), "NULL")
   }
 
   const handleResetLower = () => {
@@ -771,6 +816,16 @@ const App = () => {
 
   const handleFinalSearch = () => {
     const state = inputStateRef.current
+    const newErrors = {
+      year: !state.year || state.year === "",
+      org: !state.org || state.org === "NULL",
+      faculty: !state.faculty || state.faculty === "NULL"
+    }
+    setErrors(newErrors)
+    if (newErrors.year || newErrors.org || newErrors.faculty) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
     const sync = (
       el: HTMLInputElement | HTMLSelectElement | null,
       val: string

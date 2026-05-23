@@ -61,6 +61,7 @@ export const getStyle: PlasmoGetStyle = () => {
       min-width: 100vw;
       min-height: 100vh;
       z-index: 10000;
+
       font-family: "Gen Interface JP", sans-serif;
       font-weight: 400;
       color: var(--text-color);
