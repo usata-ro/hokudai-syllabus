@@ -2,6 +2,8 @@ import React from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { COLORS } from "~lib/theme"
+
 const Toggle = ({
   checked,
   onChange
@@ -15,7 +17,7 @@ const Toggle = ({
       style={{
         width: "44px",
         height: "24px",
-        backgroundColor: checked ? "#1F8C32" : "#ccc",
+        backgroundColor: checked ? COLORS.main : "#ccc",
         borderRadius: "12px",
         position: "relative",
         cursor: "pointer",
@@ -57,19 +59,18 @@ const IndexPopup = () => {
         backgroundColor: "#ffffff",
         margin: 0,
         padding: 0,
-        color: "#001C0C",
+        color: COLORS.text,
         boxSizing: "border-box",
         overflow: "hidden"
       }}>
       <div
         style={{
-          background:
-            "linear-gradient(135deg, #4CAF50 0%, #1F8C32 50%, #166524 100%)",
+          background: COLORS.headerGradient,
           color: "#ffffff",
           padding: "18px 16px",
           textAlign: "center",
           boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
-          borderBottom: "1px solid #d1e6d5"
+          borderBottom: `1px solid ${COLORS.borderColor}`
         }}>
         <h2
           style={{
@@ -100,8 +101,8 @@ const IndexPopup = () => {
           style={{
             margin: "0 0 16px 0",
             fontSize: "0.9rem",
-            color: "#1F8C32",
-            borderLeft: "4px solid #1F8C32",
+            color: COLORS.main,
+            borderLeft: `4px solid ${COLORS.main}`,
             paddingLeft: "8px",
             lineHeight: "1",
             fontWeight: "bold"
@@ -167,7 +168,7 @@ const IndexPopup = () => {
           style={{
             marginTop: "20px",
             padding: "12px",
-            backgroundColor: "#f0f7f1",
+            backgroundColor: COLORS.itemHoverBg,
             borderRadius: "10px",
             textAlign: "center"
           }}>
@@ -177,7 +178,7 @@ const IndexPopup = () => {
             rel="noopener noreferrer"
             style={{
               fontSize: "0.8rem",
-              color: "#166524",
+              color: COLORS.mainDark,
               textDecoration: "none",
               fontWeight: "bold",
               display: "flex",
@@ -194,7 +195,7 @@ const IndexPopup = () => {
           style={{
             marginTop: "20px",
             padding: "12px",
-            backgroundColor: "#f0f7f1",
+            backgroundColor: COLORS.itemHoverBg,
             borderRadius: "10px",
             textAlign: "center"
           }}>
@@ -204,7 +205,7 @@ const IndexPopup = () => {
             rel="noopener noreferrer"
             style={{
               fontSize: "0.8rem",
-              color: "#006085",
+              color: COLORS.inazo,
               textDecoration: "none",
               fontWeight: "bold",
               display: "flex",
@@ -234,7 +235,8 @@ const IndexPopup = () => {
             color: "#999",
             lineHeight: "1.5"
           }}>
-          Version 2.0.2 | Okaeri Syllabus in Hokudai
+          Version {chrome.runtime.getManifest().version} | Okaeri Syllabus in
+          Hokudai
         </div>
       </div>
     </div>

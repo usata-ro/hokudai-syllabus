@@ -1,12 +1,11 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useState } from "react"
-import regularFont from "url:~assets/fonts/GenInterfaceJP-Regular.ttf"
-import boldFont from "url:~assets/fonts/GenInterfaceJPDisplay-Bold.ttf"
 
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { DOM } from "~lib/domAdapter"
+import { FONT_FACE_CSS, THEME_VARS_DARK, THEME_VARS_LIGHT } from "~lib/theme"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -17,42 +16,20 @@ export const config: PlasmoCSConfig = {
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
 
-  // インポートした変数をそのままCSSに埋め込みます
+  // 共有テーマ（lib/theme.ts）のフォントとCSS変数を埋め込みます
   style.textContent = `
-    @font-face {
-      font-family: 'Gen Interface JP';
-      src: url('${regularFont}') format('truetype');
-      font-weight: 400;
-      font-style: normal;
-    }
-    
-    @font-face {
-      font-family: 'Gen Interface JP Display';
-      src: url('${boldFont}') format('truetype');
-      font-weight: 800;
-      font-style: normal;
-    }
+    ${FONT_FACE_CSS}
 
     :host {
-      --text-color: #001C0C;
-      --main-color: #1F8C32;
-      --accent-color: #89bf80;
+      ${THEME_VARS_LIGHT}
+      /* 詳細画面のみの調整：背景は白ベース */
       --bg-color: #ffffff;
-      --table-th-bg: #f5faf6;
-      --border-color: #d1e6d5;
-      --header-text: #ffffff;
-      --inazo-color: #006085;
     }
 
     @media (prefers-color-scheme: dark) {
       :host {
-        --text-color: #e6f2ec;
-        --main-color: #2eb845;
-        --accent-color: #4a7543;
-        --bg-color: #0d1a12;
-        --table-th-bg: #152b1d;
-        --border-color: #21402b;
-        --header-text: #e6f2ec;
+        ${THEME_VARS_DARK}
+        /* 詳細画面のみの調整 */
         --inazo-color: #0a7ea3;
       }
     }

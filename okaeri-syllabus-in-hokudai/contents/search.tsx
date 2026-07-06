@@ -1,12 +1,11 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import regularFont from "url:~assets/fonts/GenInterfaceJP-Regular.ttf"
-import boldFont from "url:~assets/fonts/GenInterfaceJPDisplay-Bold.ttf"
 
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { DOM } from "~lib/domAdapter"
+import { FONT_FACE_CSS, THEME_VARS_DARK, THEME_VARS_LIGHT } from "~lib/theme"
 import { cleanCache, debounce, observeDOM, splitLang } from "~lib/utils"
 
 // 🌟 7. Postback Allowlist (予期しないRCEを防ぐ)
@@ -19,6 +18,126 @@ const ALLOWED_TARGETS = [
   "ctl00$phContents$lnkReturn_Up$lnk"
 ]
 
+// 🌟 AutoPostBack付きセレクト（サーバー側に変更イベントハンドラが存在する）。
+// これらの値変更を検索ボタンと同じPOSTに同居させると、ASP.NETが
+// 「変更イベント→検索ボタン」の順に処理する際、変更イベント側が
+// 開講学期などの他の検索条件をリセットしてしまうため、検索前に
+// resolveAutoPostbacks で変更だけを先にサーバーへ処理させる必要がある。
+const AUTOPOSTBACK_SELECTS = [
+  { name: "ctl00$phContents$ddl_fac", get: () => DOM.search.getFacultySelect() },
+  {
+    name: "ctl00$phContents$ddl_sbj_sort",
+    get: () => DOM.search.getSortSelect()
+  },
+  { name: "ctl00$phContents$ddl_lang", get: () => DOM.search.getLangSelect() },
+  {
+    name: "ctl00$phContents$ddl_lct_do_type",
+    get: () => DOM.search.getMethodSelect()
+  }
+]
+
+// サーバーが最後にレンダリングした選択値（selected属性）を返す。
+// .value と異なり、こちらはクライアント側の変更では変化しない。
+const getServerSelectedValue = (el: HTMLSelectElement | null): string | null => {
+  if (!el) return null
+  const selected = el.querySelector<HTMLOptionElement>("option[selected]")
+  return (selected ?? el.options[0])?.value ?? null
+}
+
+// React側の入力状態を、隠してある元フォームの各コントロールへ同期する
+const syncStateToForm = (state: any) => {
+  const sync = (
+    el: HTMLInputElement | HTMLSelectElement | null,
+    val: string
+  ) => {
+    if (el) el.value = val
+  }
+  sync(DOM.search.getYearSelect(), state.year)
+  sync(DOM.search.getOrgSelect(), state.org)
+  sync(DOM.search.getFacultySelect(), state.faculty)
+  sync(DOM.search.getGradSelect(), state.grad)
+  sync(DOM.search.getTermSelect(), state.term)
+  sync(DOM.search.getDaySelect(), state.day)
+  sync(DOM.search.getTimeSelect(), state.time)
+  sync(DOM.search.getSortSelect(), state.sort)
+  sync(DOM.search.getSbjInput(), state.sbj)
+  sync(DOM.search.getStaffInput(), state.staff)
+  sync(DOM.search.getKeywordInput(), state.keyword)
+  sync(DOM.search.getAllInput(), state.all)
+  sync(DOM.search.getExpSelect(), state.experience)
+  sync(DOM.search.getLangSelect(), state.langCode)
+  sync(DOM.search.getMethodSelect(), state.method)
+  document
+    .querySelectorAll<HTMLInputElement>('input[name*="cblSDGs"]')
+    .forEach((cb) => {
+      cb.checked = state.sdgs.includes(cb.value)
+    })
+}
+
+// AutoPostBack系セレクトの変更を、画面遷移なしのfetchで先にサーバーへ
+// 処理させ、応答から隠しフィールド（__VIEWSTATE群）とセレクトの選択肢を
+// 実フォームへ書き戻す。成功/変更なしで true を返す。
+const resolveAutoPostbacks = async (form: HTMLFormElement): Promise<boolean> => {
+  const eventTarget = DOM.getEventTarget()
+  const eventArgument = DOM.getEventArgument()
+  if (!eventTarget || !eventArgument) return false
+
+  const changed = AUTOPOSTBACK_SELECTS.filter(({ get }) => {
+    const el = get()
+    return el && el.value !== getServerSelectedValue(el)
+  })
+  if (changed.length === 0) return true
+
+  try {
+    eventTarget.value = changed[0].name
+    eventArgument.value = ""
+    const body = new URLSearchParams(new FormData(form) as any).toString()
+    const res = await fetch(form.action || window.location.href, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+      },
+      body,
+      credentials: "same-origin"
+    })
+    if (!res.ok) return false
+    const doc = new DOMParser().parseFromString(await res.text(), "text/html")
+
+    doc
+      .querySelectorAll<HTMLInputElement>('input[type="hidden"]')
+      .forEach((src) => {
+        if (!src.name) return
+        let dst = form.querySelector<HTMLInputElement>(
+          `input[name="${src.name}"]`
+        )
+        if (!dst) {
+          dst = document.createElement("input")
+          dst.type = "hidden"
+          dst.name = src.name
+          dst.id = src.id
+          form.appendChild(dst)
+        }
+        dst.value = src.value
+      })
+    doc.querySelectorAll<HTMLSelectElement>("select").forEach((src) => {
+      const dst = form.querySelector<HTMLSelectElement>(
+        `select[name="${src.name}"]`
+      )
+      if (dst) {
+        dst.innerHTML = src.innerHTML
+        dst.value = src.value
+      }
+    })
+    return true
+  } catch (e) {
+    console.warn("AutoPostBack resolution failed:", e)
+    return false
+  } finally {
+    eventTarget.value = ""
+    eventArgument.value = ""
+  }
+}
+
 export const config: PlasmoCSConfig = {
   matches: [
     "https://gakumu.academic.hokudai.ac.jp/Portal/Public/Syllabus/SearchMain.aspx*"
@@ -28,72 +147,12 @@ export const config: PlasmoCSConfig = {
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
 
-  // インポートした変数をそのままCSSに埋め込みます
+  // 共有テーマ（lib/theme.ts）のフォントとCSS変数を埋め込みます
   style.textContent = `
-    @font-face {
-      font-family: 'Gen Interface JP';
-      src: url('${regularFont}') format('truetype');
-      font-weight: 400;
-      font-style: normal;
-    }
-    
-    @font-face {
-      font-family: 'Gen Interface JP Display';
-      src: url('${boldFont}') format('truetype');
-      font-weight: 800;
-      font-style: normal;
-    }
+    ${FONT_FACE_CSS}
 
     :host {
-      /* 基本カラー */
-      --text-color: #001C0C;
-      --text-secondary: #444444;
-      --text-muted: #888888;
-      --text-on-main: #ffffff;
-      --main-color: #1F8C32;
-      --accent-color: #89bf80;
-      --bg-color: #f0f4f1;
-      --card-bg: #ffffff;
-      --input-bg: #ffffff;
-      
-      /* ヘッダー関連 */
-      --header-text: #ffffff;
-      --header-bg-start: #4CAF50;
-      --header-bg-mid: #1F8C32;
-      --header-bg-end: #166524;
-      --lang-bg: rgba(255, 255, 255, 0.2);
-      --lang-border: rgba(255, 255, 255, 0.4);
-      --lang-active-bg: #ffffff;
-      --lang-active-text: #1F8C32;
-      
-      /* コンポーネント関連 (チップ、アコーディオンなど) */
-      --item-bg: #f8faf9;
-      --item-hover-bg: #f0f7f1;
-      --item-border: #e0e8e1;
-      --faculty-bg: #f9fcf9;
-      --faculty-border: #e8f0e8;
-      
-      /* テーブル関連 */
-      --table-th-bg: #f5faf6;
-      --table-border: #f0f0f0;
-      --border-color: #d1e6d5;
-      
-      /* ボタン・バッジ関連 */
-      --inazo-color: #006085;
-      --btn-en-bg: #666666;
-      --btn-back-border: #cccccc;
-      --btn-back-hover: #f9f9f9;
-      
-      /* エラー状態 */
-      --error-color: #e53935;
-      --error-bg: #fff8f8;
-      --error-border: #ffcdd2;
-      --error-text: #d32f2f;
-      
-      /* シャドウ */
-      --shadow-sm: rgba(0, 28, 12, 0.06);
-      --shadow-md: rgba(31, 140, 50, 0.2);
-      --shadow-lg: rgba(31, 140, 50, 0.25);
+      ${THEME_VARS_LIGHT}
 
       display: block;
       width: 100%;
@@ -101,55 +160,7 @@ export const getStyle: PlasmoGetStyle = () => {
 
     @media (prefers-color-scheme: dark) {
       :host {
-        /* 基本カラー (ダーク) */
-        --text-color: #e6f2ec;
-        --text-secondary: #b0beb5;
-        --text-muted: #808b94;
-        --text-on-main: #ffffff;
-        --main-color: #2eb845;
-        --accent-color: #4a7543;
-        --bg-color: #0d1a12;
-        --card-bg: #152419;
-        --input-bg: #121f15;
-        
-        /* ヘッダー関連 (ダーク) */
-        --header-text: #e6f2ec;
-        --header-bg-start: #1b4d24;
-        --header-bg-mid: #103816;
-        --header-bg-end: #09210c;
-        --lang-bg: rgba(0, 0, 0, 0.3);
-        --lang-border: rgba(255, 255, 255, 0.2);
-        --lang-active-bg: #2eb845;
-        --lang-active-text: #ffffff;
-        
-        /* コンポーネント関連 (ダーク) */
-        --item-bg: #1a2e20;
-        --item-hover-bg: #213d2a;
-        --item-border: #2c4a35;
-        --faculty-bg: #18291c;
-        --faculty-border: #233d28;
-        
-        /* テーブル関連 (ダーク) */
-        --table-th-bg: #152b1d;
-        --table-border: #2c4a35;
-        --border-color: #21402b;
-        
-        /* ボタン・バッジ関連 (ダーク) */
-        --inazo-color: #3bb3e0; /* 見やすいように調整 */
-        --btn-en-bg: #555555;
-        --btn-back-border: #444444;
-        --btn-back-hover: #1f3325;
-        
-        /* エラー状態 (ダーク) */
-        --error-color: #ef5350;
-        --error-bg: #3d1c1c;
-        --error-border: #7a2b2b;
-        --error-text: #ff8a80;
-        
-        /* シャドウ (ダーク) */
-        --shadow-sm: rgba(0, 0, 0, 0.4);
-        --shadow-md: rgba(46, 184, 69, 0.15);
-        --shadow-lg: rgba(46, 184, 69, 0.2);
+        ${THEME_VARS_DARK}
       }
     }
 
@@ -354,7 +365,7 @@ export const getStyle: PlasmoGetStyle = () => {
 
 const SDGS_LABELS = {
   ja: [
-    "1. 貧混をなくそう",
+    "1. 貧困をなくそう",
     "2. 飢餓をゼロに",
     "3. すべての人に健康と福祉を",
     "4. 質の高い教育をみんなに",
@@ -555,6 +566,9 @@ const App = () => {
     inputStateRef.current = inputState
   }, [inputState])
 
+  // 検索実行中の二重送信防止
+  const isSearchingRef = useRef(false)
+
   const [errors, setErrors] = useState({
     year: false,
     org: false,
@@ -688,7 +702,12 @@ const App = () => {
       experience: DOM.search.getExpSelect()?.value || "NULL",
       langCode: DOM.search.getLangSelect()?.value || "NULL",
       method: DOM.search.getMethodSelect()?.value || "NULL",
-      sdgs: []
+      // 再読込後もサーバーが返したチェック状態を復元する
+      sdgs: Array.from(
+        document.querySelectorAll<HTMLInputElement>(
+          'input[name*="cblSDGs"]:checked'
+        )
+      ).map((cb) => cb.value)
     })
   }
 
@@ -706,11 +725,14 @@ const App = () => {
     const form = DOM.form()
     const eventTarget = DOM.getEventTarget()
     const ddlOrg = DOM.search.getOrgSelect()
-    const ddlFaculty = DOM.search.getFacultySelect()
 
     if (form && eventTarget && ddlOrg) {
-      ddlOrg.value = val
-      if (ddlFaculty) ddlFaculty.value = facultyValue
+      // 送信前に他の入力値も同期し、再読込後も条件が保持されるようにする
+      syncStateToForm({
+        ...inputStateRef.current,
+        org: val,
+        faculty: facultyValue
+      })
       eventTarget.value = "ctl00$phContents$ddl_org"
       // 連打時の過剰POSTを防ぐ
       submitDebounced(form)
@@ -726,7 +748,8 @@ const App = () => {
     const ddlYear = DOM.search.getYearSelect()
 
     if (form && eventTarget && ddlYear) {
-      ddlYear.value = val
+      // 送信前に他の入力値も同期し、再読込後も条件が保持されるようにする
+      syncStateToForm({ ...inputStateRef.current, year: val })
       eventTarget.value = "ctl00$phContents$ddl_year"
       submitDebounced(form)
     }
@@ -796,8 +819,12 @@ const App = () => {
     const data = resultRows.map((row) => {
       const cells = row.querySelectorAll("td")
 
-      const jpLink = cells[3]?.querySelector(".jp")?.getAttribute("href")
-      let enLink = cells[3]?.querySelector(".en")?.getAttribute("href")
+      // シラバスリンク列はヘッダーが空のため、リンクを含むセルを行内から探す
+      const linkCell = Array.from(cells).find((c) =>
+        c.querySelector("a.jp, a.en")
+      )
+      const jpLink = linkCell?.querySelector(".jp")?.getAttribute("href")
+      let enLink = linkCell?.querySelector(".en")?.getAttribute("href")
       if (!enLink && jpLink) enLink = jpLink.replace("je_cd=1", "je_cd=2")
 
       return {
@@ -912,7 +939,7 @@ const App = () => {
     }))
   }
 
-  const handleFinalSearch = () => {
+  const handleFinalSearch = async () => {
     const state = inputStateRef.current
     const newErrors = {
       year: !state.year || state.year === "",
@@ -924,30 +951,27 @@ const App = () => {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    const sync = (
-      el: HTMLInputElement | HTMLSelectElement | null,
-      val: string
-    ) => {
-      if (el) el.value = val
+    if (isSearchingRef.current) return
+    isSearchingRef.current = true
+
+    try {
+      syncStateToForm(state)
+
+      // 🌟 学部などAutoPostBack系の変更を先にサーバーへ処理させる。
+      // これを省くと、変更イベントが検索ボタンと同一POSTで処理され、
+      // 開講学期などの条件がサーバー側で破棄される（1度目の検索で
+      // 条件が適用されないバグの原因）。
+      const form = DOM.form()
+      if (form) {
+        await resolveAutoPostbacks(form)
+        // 中間POSTの応答でセレクトが再構築され選択が外れるため再同期
+        syncStateToForm(state)
+      }
+
+      DOM.search.getSearchBtn()?.click()
+    } finally {
+      isSearchingRef.current = false
     }
-
-    sync(DOM.search.getYearSelect(), state.year)
-    sync(DOM.search.getOrgSelect(), state.org)
-    sync(DOM.search.getFacultySelect(), state.faculty)
-    sync(DOM.search.getGradSelect(), state.grad)
-    sync(DOM.search.getTermSelect(), state.term)
-    sync(DOM.search.getDaySelect(), state.day)
-    sync(DOM.search.getTimeSelect(), state.time)
-    sync(DOM.search.getSortSelect(), state.sort)
-    sync(DOM.search.getSbjInput(), state.sbj)
-    sync(DOM.search.getStaffInput(), state.staff)
-    sync(DOM.search.getKeywordInput(), state.keyword)
-    sync(DOM.search.getAllInput(), state.all)
-    sync(DOM.search.getExpSelect(), state.experience)
-    sync(DOM.search.getLangSelect(), state.langCode)
-    sync(DOM.search.getMethodSelect(), state.method)
-
-    DOM.search.getSearchBtn()?.click()
   }
 
   const handleBackToSearch = () => {
